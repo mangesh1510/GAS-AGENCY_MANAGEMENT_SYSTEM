@@ -1,0 +1,88 @@
+[
+  {
+    "id": "inventory.add-status-enum-values",
+    "label": "Add new inventory movement types",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "new InventoryType values do not both exist",
+        "sql": "\n              SELECT NOT (\n                EXISTS (\n                  SELECT 1\n                  FROM pg_enum e\n                  JOIN pg_type t ON t.oid = e.enumtypid\n                  JOIN pg_namespace n ON n.oid = t.typnamespace\n                  WHERE n.nspname = 'public'\n                    AND t.typname = 'InventoryType'\n                    AND e.enumlabel = 'SENT_FOR_REFILL'\n                )\n                AND\n                EXISTS (\n                  SELECT 1\n                  FROM pg_enum e\n                  JOIN pg_type t ON t.oid = e.enumtypid\n                  JOIN pg_namespace n ON n.oid = t.typnamespace\n                  WHERE n.nspname = 'public'\n                    AND t.typname = 'InventoryType'\n                    AND e.enumlabel = 'REFILL_RECEIVED'\n                )\n              )\n            "
+      }
+    ],
+    "execute": [
+      {
+        "description": "add SENT_FOR_REFILL",
+        "sql": "\n              ALTER TYPE \"public\".\"InventoryType\"\n              ADD VALUE IF NOT EXISTS 'SENT_FOR_REFILL'\n              BEFORE 'ADJUSTMENT'\n            "
+      },
+      {
+        "description": "add REFILL_RECEIVED",
+        "sql": "\n              ALTER TYPE \"public\".\"InventoryType\"\n              ADD VALUE IF NOT EXISTS 'REFILL_RECEIVED'\n              BEFORE 'ADJUSTMENT'\n            "
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "new InventoryType values exist",
+        "sql": "\n              SELECT\n                EXISTS (\n                  SELECT 1\n                  FROM pg_enum e\n                  JOIN pg_type t ON t.oid = e.enumtypid\n                  JOIN pg_namespace n ON n.oid = t.typnamespace\n                  WHERE n.nspname = 'public'\n                    AND t.typname = 'InventoryType'\n                    AND e.enumlabel = 'SENT_FOR_REFILL'\n                )\n                AND\n                EXISTS (\n                  SELECT 1\n                  FROM pg_enum e\n                  JOIN pg_type t ON t.oid = e.enumtypid\n                  JOIN pg_namespace n ON n.oid = t.typnamespace\n                  WHERE n.nspname = 'public'\n                    AND t.typname = 'InventoryType'\n                    AND e.enumlabel = 'REFILL_RECEIVED'\n                )\n            "
+      }
+    ]
+  },
+  {
+    "id": "inventory.add-status-column",
+    "label": "Add inventory status",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "InventoryStatus and status column do not both exist",
+        "sql": "\n              SELECT NOT (\n                EXISTS (\n                  SELECT 1\n                  FROM pg_type t\n                  JOIN pg_namespace n ON n.oid = t.typnamespace\n                  WHERE n.nspname = 'public'\n                    AND t.typname = 'InventoryStatus'\n                )\n                AND\n                EXISTS (\n                  SELECT 1\n                  FROM information_schema.columns\n                  WHERE table_schema = 'public'\n                    AND table_name = 'inventory'\n                    AND column_name = 'status'\n                )\n              )\n            "
+      }
+    ],
+    "execute": [
+      {
+        "description": "create InventoryStatus enum",
+        "sql": "\n              CREATE TYPE \"public\".\"InventoryStatus\" AS ENUM (\n                'FILLED',\n                'EMPTY'\n              )\n            "
+      },
+      {
+        "description": "add status column",
+        "sql": "\n              ALTER TABLE \"public\".\"inventory\"\n              ADD COLUMN \"status\" \"public\".\"InventoryStatus\"\n              NOT NULL\n              DEFAULT 'FILLED'\n            "
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "inventory status column exists",
+        "sql": "\n              SELECT EXISTS (\n                SELECT 1\n                FROM information_schema.columns\n                WHERE table_schema = 'public'\n                  AND table_name = 'inventory'\n                  AND column_name = 'status'\n              )\n            "
+      }
+    ]
+  },
+  {
+    "id": "inventory.add-status-index",
+    "label": "Add inventory status index",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "inventory status index does not exist",
+        "sql": "\n              SELECT NOT EXISTS (\n                SELECT 1\n                FROM pg_indexes\n                WHERE schemaname = 'public'\n                  AND indexname = 'inventory_cylinderType_status_idx'\n              )\n            "
+      }
+    ],
+    "execute": [
+      {
+        "description": "create inventory status index",
+        "sql": "\n              CREATE INDEX \"inventory_cylinderType_status_idx\"\n              ON \"public\".\"inventory\" (\"cylinderTypeId\", \"status\")\n            "
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "inventory status index exists",
+        "sql": "\n              SELECT EXISTS (\n                SELECT 1\n                FROM pg_indexes\n                WHERE schemaname = 'public'\n                  AND indexname = 'inventory_cylinderType_status_idx'\n              )\n            "
+      }
+    ]
+  }
+]

@@ -1,0 +1,231 @@
+// use prisma-8
+// Contract inferred from the live database schema. Edit as needed, then run `prisma contract emit`.
+namespace public {
+  model Customers {
+    id             Int                @id(map: "customers_pkey") @default(autoincrement())
+    address        String?
+    createdAt      TimestampString(3) @default(now())
+    isActive       Boolean            @default(true)
+    mobile         String
+    name           String
+    openingBalance Numeric(65, 30)    @default(0)
+    updatedAt      TimestampString(3)
+    deliveries     Deliveries[]
+    payments       Payments[]
+
+    @@index([mobile], map: "customers_mobile_idx")
+    @@map("customers")
+  }
+
+  model CylinderTypes {
+    id                Int                @id(map: "cylinder_types_pkey") @default(autoincrement())
+    capacityKg        Numeric(65, 30)
+    createdAt         TimestampString(3) @default(now())
+    isActive          Boolean            @default(true)
+    lowStockThreshold Int                @default(5)
+    name              String
+    sellingPrice      Numeric(65, 30)
+    purchasePrice     Numeric(65, 30)    @default(0)
+    updatedAt         TimestampString(3)
+    inventory         Inventory[]
+    deliveries        Deliveries[]
+    purchaseItems     PurchaseItems[]
+
+    @@map("cylinder_types")
+  }
+
+  model Users {
+    id           Int                @id(map: "users_pkey") @default(autoincrement())
+    createdAt    TimestampString(3) @default(now())
+    email        String
+    isActive     Boolean            @default(true)
+    name         String
+    passwordHash String
+    role         pg.enum(UserRole)  @default("STAFF")
+    updatedAt    TimestampString(3)
+    deliveries   Deliveries[]
+
+    @@index([email], map: "users_email_key", unique: true)
+    @@map("users")
+  }
+
+  native_enum UserRole {
+    ADMIN = "ADMIN"
+    STAFF = "STAFF"
+  }
+
+  model Inventory {
+    id             Int                      @id(map: "inventory_pkey") @default(autoincrement())
+    cylinderTypeId Int
+    quantity       Int                      @default(0)
+    type           pg.enum(InventoryType)
+    status         pg.enum(InventoryStatus)
+    note           String?
+    createdAt      TimestampString(3)       @default(now())
+
+    cylinderType   CylinderTypes            @relation(fields: [cylinderTypeId], references: [id])
+
+    @@index([cylinderTypeId], map: "inventory_cylinderTypeId_idx")
+    @@index([cylinderTypeId, status], map: "inventory_cylinderType_status_idx")
+    @@map("inventory")
+  }
+
+  native_enum InventoryType {
+    OPENING = "OPENING"
+    RECEIVED = "RECEIVED"
+    SOLD = "SOLD"
+    EMPTY_RETURNED = "EMPTY_RETURNED"
+    SENT_FOR_REFILL = "SENT_FOR_REFILL"
+    REFILL_RECEIVED = "REFILL_RECEIVED"
+    ADJUSTMENT = "ADJUSTMENT"
+  }
+
+  native_enum InventoryStatus {
+    FILLED = "FILLED"
+    EMPTY = "EMPTY"
+  }
+
+  model Deliveries {
+    id             Int                @id(map: "deliveries_pkey") @default(autoincrement())
+    customerId     Int
+    cylinderTypeId Int
+    quantity       Int
+    unitPrice      Numeric(65, 30)
+    totalAmount    Numeric(65, 30)
+    deliveryDate   TimestampString(3) @default(now())
+    note           String?
+    createdAt      TimestampString(3) @default(now())
+    createdBy      Int?
+
+    customer       Customers          @relation(fields: [customerId], references: [id])
+    cylinderType   CylinderTypes      @relation(fields: [cylinderTypeId], references: [id])
+    user           Users?             @relation(fields: [createdBy], references: [id])
+
+    @@index([customerId], map: "deliveries_customerId_idx")
+    @@index([cylinderTypeId], map: "deliveries_cylinderTypeId_idx")
+    @@index([deliveryDate], map: "deliveries_deliveryDate_idx")
+    @@map("deliveries")
+  }
+
+  model Payments {
+    id            Int                    @id(map: "payments_pkey") @default(autoincrement())
+    customerId    Int
+    amount        Numeric(65, 30)
+    paymentMethod pg.enum(PaymentMethod)
+    paymentDate   TimestampString(3)     @default(now())
+    note          String?
+    createdAt     TimestampString(3)     @default(now())
+
+    customer      Customers              @relation(fields: [customerId], references: [id])
+
+    @@index([customerId], map: "payments_customerId_idx")
+    @@index([paymentDate], map: "payments_paymentDate_idx")
+    @@map("payments")
+  }
+
+  native_enum PaymentMethod {
+    CASH = "CASH"
+    UPI = "UPI"
+    BANK_TRANSFER = "BANK_TRANSFER"
+    CHEQUE = "CHEQUE"
+  }
+
+  native_enum RestoreStatus {
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+  }
+
+  model RestoreLogs {
+    id             Int                    @id(map: "restore_logs_pkey") @default(autoincrement())
+    fileName       String
+    targetDatabase String
+    status         pg.enum(RestoreStatus)
+    message        String?
+    createdAt      TimestampString(3)     @default(now())
+    restoredBy     Int?
+
+    @@index([createdAt], map: "restore_logs_createdAt_idx")
+    @@index([status], map: "restore_logs_status_idx")
+    @@map("restore_logs")
+  }
+
+  native_enum BackupStatus {
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+  }
+
+  model BackupLogs {
+    id             Int                   @id(map: "backup_logs_pkey") @default(autoincrement())
+    fileName       String
+    targetDatabase String
+    status         pg.enum(BackupStatus)
+    fileSize       BigInt                @default(0)
+    message        String?
+    createdAt      TimestampString(3)    @default(now())
+    createdBy      Int?
+
+    @@index([createdAt], map: "backup_logs_createdAt_idx")
+    @@index([status], map: "backup_logs_status_idx")
+    @@map("backup_logs")
+  }
+
+  native_enum PurchaseStatus {
+    DRAFT = "DRAFT"
+    ORDERED = "ORDERED"
+    RECEIVED = "RECEIVED"
+    CANCELLED = "CANCELLED"
+  }
+
+  model Suppliers {
+    id        Int                @id(map: "suppliers_pkey") @default(autoincrement())
+    name      String
+    mobile    String?
+    address   String?
+    isActive  Boolean            @default(true)
+    createdAt TimestampString(3) @default(now())
+    updatedAt TimestampString(3)
+
+    purchases Purchases[]
+
+    @@index([name], map: "suppliers_name_idx")
+    @@map("suppliers")
+  }
+
+  model Purchases {
+    id            Int                     @id(map: "purchases_pkey") @default(autoincrement())
+    supplierId    Int
+    invoiceNumber String?
+    purchaseDate  TimestampString(3)      @default(now())
+    totalAmount   Numeric(65, 30)         @default(0)
+    status        pg.enum(PurchaseStatus) @default("DRAFT")
+    note          String?
+    createdAt     TimestampString(3)      @default(now())
+    updatedAt     TimestampString(3)
+
+    supplier      Suppliers               @relation(fields: [supplierId], references: [id])
+    items         PurchaseItems[]
+
+    @@index([supplierId], map: "purchases_supplierId_idx")
+    @@index([purchaseDate], map: "purchases_purchaseDate_idx")
+    @@index([status], map: "purchases_status_idx")
+    @@map("purchases")
+  }
+
+  model PurchaseItems {
+    id                Int                      @id(map: "purchase_items_pkey") @default(autoincrement())
+    purchaseId        Int
+    cylinderTypeId    Int
+    quantity          Int
+    inventoryStatus   pg.enum(InventoryStatus) @default("FILLED")
+    unitPurchasePrice Numeric(65, 30)
+    lineTotal         Numeric(65, 30)
+    createdAt         TimestampString(3)       @default(now())
+
+    purchase          Purchases                @relation(fields: [purchaseId], references: [id])
+    cylinderType      CylinderTypes            @relation(fields: [cylinderTypeId], references: [id])
+
+    @@index([purchaseId], map: "purchase_items_purchaseId_idx")
+    @@index([cylinderTypeId], map: "purchase_items_cylinderTypeId_idx")
+    @@map("purchase_items")
+  }
+}

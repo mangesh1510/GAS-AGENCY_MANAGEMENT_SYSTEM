@@ -1,0 +1,83 @@
+// use prisma-8
+// Contract inferred from the live database schema. Edit as needed, then run `prisma contract emit`.
+
+namespace public {
+  model Customers {
+    id             Int                @id(map: "customers_pkey") @default(autoincrement())
+    address        String?
+    createdAt      TimestampString(3) @default(now())
+    isActive       Boolean            @default(true)
+    mobile         String
+    name           String
+    openingBalance Numeric(65, 30)    @default(0)
+    updatedAt      TimestampString(3)
+
+    @@index([mobile], map: "customers_mobile_idx")
+    @@map("customers")
+  }
+
+  model CylinderTypes {
+    id           Int                @id(map: "cylinder_types_pkey") @default(autoincrement())
+    capacityKg   Numeric(65, 30)
+    createdAt    TimestampString(3) @default(now())
+    isActive     Boolean            @default(true)
+    lowStockThreshold Int @default(5)
+    name         String
+    sellingPrice Numeric(65, 30)
+    updatedAt    TimestampString(3)
+    inventory    Inventory[]
+
+    @@map("cylinder_types")
+  }
+
+  model Users {
+    id           Int                @id(map: "users_pkey") @default(autoincrement())
+    createdAt    TimestampString(3) @default(now())
+    email        String
+    isActive     Boolean            @default(true)
+    name         String
+    passwordHash String
+    role         pg.enum(UserRole)  @default("STAFF")
+    updatedAt    TimestampString(3)
+
+    @@index([email], map: "users_email_key", unique: true)
+    @@map("users")
+  }
+
+  native_enum UserRole {
+    ADMIN = "ADMIN"
+    STAFF = "STAFF"
+  }
+
+  model Inventory {
+  id             Int                @id(map: "inventory_pkey") @default(autoincrement())
+  cylinderTypeId Int
+  quantity       Int                @default(0)
+  type           pg.enum(InventoryType)
+  status         pg.enum(InventoryStatus)
+  note           String?
+  createdAt      TimestampString(3) @default(now())
+
+  cylinderType   CylinderTypes @relation(fields: [cylinderTypeId], references: [id])
+
+  @@index([cylinderTypeId], map: "inventory_cylinderTypeId_idx")
+  @@index([cylinderTypeId, status], map: "inventory_cylinderType_status_idx")
+  @@map("inventory")
+}
+
+  native_enum InventoryType {
+  OPENING = "OPENING"
+  RECEIVED = "RECEIVED"
+  SOLD = "SOLD"
+  EMPTY_RETURNED = "EMPTY_RETURNED"
+  SENT_FOR_REFILL = "SENT_FOR_REFILL"
+  REFILL_RECEIVED = "REFILL_RECEIVED"
+  ADJUSTMENT = "ADJUSTMENT"
+}
+native_enum InventoryStatus {
+  FILLED = "FILLED"
+  EMPTY = "EMPTY"
+}
+
+}
+

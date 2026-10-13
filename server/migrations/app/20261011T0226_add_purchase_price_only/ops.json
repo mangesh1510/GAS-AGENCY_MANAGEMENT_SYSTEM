@@ -1,0 +1,44 @@
+[
+  {
+    "id": "column.public.cylinder_types.purchasePrice",
+    "label": "Add column \"purchasePrice\" to \"cylinder_types\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "purchasePrice",
+        "table": "cylinder_types"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"purchasePrice\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "cylinder_types",
+          "purchasePrice"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"purchasePrice\"",
+        "sql": "ALTER TABLE \"public\".\"cylinder_types\" ADD COLUMN \"purchasePrice\" numeric(65,30) DEFAULT '0'::numeric(65,30) NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"purchasePrice\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "cylinder_types",
+          "purchasePrice"
+        ]
+      }
+    ]
+  }
+]

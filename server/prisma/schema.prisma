@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+enum UserRole {
+  ADMIN
+  STAFF
+}
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(STAFF)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  restoreLogs RestoreLog[]
+
+  @@map("users")
+}
+model Customer {
+  id           Int      @id @default(autoincrement())
+  name         String
+  mobile       String
+  address      String?
+  openingBalance Decimal @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([mobile])
+  @@map("customers")
+}
+model CylinderType {
+  id           Int      @id @default(autoincrement())
+  name         String
+  capacityKg   Decimal
+  sellingPrice Decimal
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+   inventory    Inventory[]
+
+  @@map("cylinder_types")
+}
+
+model Inventory {
+  id            Int          @id @default(autoincrement())
+  cylinderTypeId Int
+  quantity      Int          @default(0)
+  type          InventoryType
+  note          String?
+  createdAt     DateTime     @default(now())
+
+  cylinderType  CylinderType @relation(fields: [cylinderTypeId], references: [id])
+
+  @@index([cylinderTypeId])
+  @@map("inventory")
+}
+
+enum InventoryType {
+  OPENING
+  RECEIVED
+  SOLD
+  EMPTY_RETURNED
+  ADJUSTMENT
+}
+
+
+enum RestoreStatus {
+  SUCCESS
+  FAILED
+}
+
+model RestoreLog {
+  id             Int           @id @default(autoincrement())
+  fileName       String
+  targetDatabase String
+  status         RestoreStatus
+  message        String?
+  createdAt      DateTime      @default(now())
+  restoredBy     Int?
+  user           User?         @relation(fields: [restoredBy], references: [id])
+
+  @@index([createdAt])
+  @@index([status])
+  @@map("restore_logs")
+}

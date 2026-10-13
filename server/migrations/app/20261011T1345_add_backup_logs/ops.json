@@ -1,0 +1,141 @@
+[
+  {
+    "id": "createNativeEnumType.BackupStatus",
+    "label": "Create enum type \"BackupStatus\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "BackupStatus"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"BackupStatus\"",
+        "sql": "CREATE TYPE \"public\".\"BackupStatus\" AS ENUM ('SUCCESS', 'FAILED')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.backup_logs",
+    "label": "Create table \"backup_logs\"",
+    "summary": "Creates table \"backup_logs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "backup_logs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"backup_logs\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"backup_logs\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"backup_logs\"",
+        "sql": "CREATE TABLE \"public\".\"backup_logs\" (\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"createdBy\" int4,\n  \"fileName\" text NOT NULL,\n  \"fileSize\" int8 DEFAULT '0'::int8 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"message\" text,\n  \"status\" \"BackupStatus\" NOT NULL,\n  \"targetDatabase\" text NOT NULL,\n  CONSTRAINT \"backup_logs_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"backup_logs\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"backup_logs\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.backup_logs.backup_logs_createdAt_idx",
+    "label": "Create index \"backup_logs_createdAt_idx\" on \"backup_logs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "backup_logs_createdAt_idx",
+        "table": "backup_logs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"backup_logs_createdAt_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"backup_logs_createdAt_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"backup_logs_createdAt_idx\"",
+        "sql": "CREATE INDEX \"backup_logs_createdAt_idx\" ON \"public\".\"backup_logs\" (\"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"backup_logs_createdAt_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"backup_logs_createdAt_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.backup_logs.backup_logs_status_idx",
+    "label": "Create index \"backup_logs_status_idx\" on \"backup_logs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "backup_logs_status_idx",
+        "table": "backup_logs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"backup_logs_status_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"backup_logs_status_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"backup_logs_status_idx\"",
+        "sql": "CREATE INDEX \"backup_logs_status_idx\" ON \"public\".\"backup_logs\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"backup_logs_status_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"backup_logs_status_idx\""
+        ]
+      }
+    ]
+  }
+]

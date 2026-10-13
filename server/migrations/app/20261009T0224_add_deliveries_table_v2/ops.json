@@ -1,0 +1,323 @@
+[
+  {
+    "id": "table.deliveries",
+    "label": "Create table \"deliveries\"",
+    "summary": "Creates table \"deliveries\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "deliveries"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"deliveries\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"deliveries\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"deliveries\"",
+        "sql": "CREATE TABLE \"public\".\"deliveries\" (\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"createdBy\" int4,\n  \"customerId\" int4 NOT NULL,\n  \"cylinderTypeId\" int4 NOT NULL,\n  \"deliveryDate\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"note\" text,\n  \"quantity\" int4 NOT NULL,\n  \"totalAmount\" numeric(65,30) NOT NULL,\n  \"unitPrice\" numeric(65,30) NOT NULL,\n  CONSTRAINT \"deliveries_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"deliveries\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"deliveries\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.deliveries.deliveries_createdBy_idx_ba0f792f",
+    "label": "Create index \"deliveries_createdBy_idx_ba0f792f\" on \"deliveries\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "deliveries_createdBy_idx_ba0f792f",
+        "table": "deliveries"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"deliveries_createdBy_idx_ba0f792f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"deliveries_createdBy_idx_ba0f792f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"deliveries_createdBy_idx_ba0f792f\"",
+        "sql": "CREATE INDEX \"deliveries_createdBy_idx_ba0f792f\" ON \"public\".\"deliveries\" (\"createdBy\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"deliveries_createdBy_idx_ba0f792f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"deliveries_createdBy_idx_ba0f792f\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.deliveries.deliveries_customerId_idx",
+    "label": "Create index \"deliveries_customerId_idx\" on \"deliveries\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "deliveries_customerId_idx",
+        "table": "deliveries"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"deliveries_customerId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"deliveries_customerId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"deliveries_customerId_idx\"",
+        "sql": "CREATE INDEX \"deliveries_customerId_idx\" ON \"public\".\"deliveries\" (\"customerId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"deliveries_customerId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"deliveries_customerId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.deliveries.deliveries_cylinderTypeId_idx",
+    "label": "Create index \"deliveries_cylinderTypeId_idx\" on \"deliveries\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "deliveries_cylinderTypeId_idx",
+        "table": "deliveries"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"deliveries_cylinderTypeId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"deliveries_cylinderTypeId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"deliveries_cylinderTypeId_idx\"",
+        "sql": "CREATE INDEX \"deliveries_cylinderTypeId_idx\" ON \"public\".\"deliveries\" (\"cylinderTypeId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"deliveries_cylinderTypeId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"deliveries_cylinderTypeId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.deliveries.deliveries_deliveryDate_idx",
+    "label": "Create index \"deliveries_deliveryDate_idx\" on \"deliveries\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "deliveries_deliveryDate_idx",
+        "table": "deliveries"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"deliveries_deliveryDate_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"deliveries_deliveryDate_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"deliveries_deliveryDate_idx\"",
+        "sql": "CREATE INDEX \"deliveries_deliveryDate_idx\" ON \"public\".\"deliveries\" (\"deliveryDate\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"deliveries_deliveryDate_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"deliveries_deliveryDate_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.deliveries.deliveries_customerId_fkey",
+    "label": "Add foreign key \"deliveries_customerId_fkey\" on \"deliveries\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "deliveries_customerId_fkey",
+        "table": "deliveries"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"deliveries_customerId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "deliveries_customerId_fkey",
+          "public",
+          "\"public\".\"deliveries\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"deliveries_customerId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"deliveries\"\nADD CONSTRAINT \"deliveries_customerId_fkey\"\nFOREIGN KEY (\"customerId\")\nREFERENCES \"public\".\"customers\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"deliveries_customerId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "deliveries_customerId_fkey",
+          "public",
+          "\"public\".\"deliveries\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.deliveries.deliveries_cylinderTypeId_fkey",
+    "label": "Add foreign key \"deliveries_cylinderTypeId_fkey\" on \"deliveries\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "deliveries_cylinderTypeId_fkey",
+        "table": "deliveries"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"deliveries_cylinderTypeId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "deliveries_cylinderTypeId_fkey",
+          "public",
+          "\"public\".\"deliveries\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"deliveries_cylinderTypeId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"deliveries\"\nADD CONSTRAINT \"deliveries_cylinderTypeId_fkey\"\nFOREIGN KEY (\"cylinderTypeId\")\nREFERENCES \"public\".\"cylinder_types\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"deliveries_cylinderTypeId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "deliveries_cylinderTypeId_fkey",
+          "public",
+          "\"public\".\"deliveries\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.deliveries.deliveries_createdBy_fkey",
+    "label": "Add foreign key \"deliveries_createdBy_fkey\" on \"deliveries\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "deliveries_createdBy_fkey",
+        "table": "deliveries"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"deliveries_createdBy_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "deliveries_createdBy_fkey",
+          "public",
+          "\"public\".\"deliveries\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"deliveries_createdBy_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"deliveries\"\nADD CONSTRAINT \"deliveries_createdBy_fkey\"\nFOREIGN KEY (\"createdBy\")\nREFERENCES \"public\".\"users\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"deliveries_createdBy_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "deliveries_createdBy_fkey",
+          "public",
+          "\"public\".\"deliveries\""
+        ]
+      }
+    ]
+  }
+]

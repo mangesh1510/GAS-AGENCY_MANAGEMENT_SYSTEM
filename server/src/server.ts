@@ -1,0 +1,65 @@
+import express from "express";
+import cors from "cors";
+import prisma from "./config/prisma.js";
+import customerRoutes from "./routes/customer.routes.js";
+import cylinderTypeRoutes from "./routes/cylinderType.routes.js";
+import inventoryRoutes from "./routes/inventory.routes.js";
+import deliveryRoutes from "./routes/delivery.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
+import reportRoutes from "./routes/report.routes.js";
+import reminderRoutes from "./routes/reminder.routes.js";
+import backupRoutes from "./routes/backup.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import restoreRoutes from "./routes/restore.routes.js";
+import supplierRoutes from "./routes/supplier.routes.js";
+import purchaseRoutes from "./routes/purchase.routes.js";
+
+
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(cors());
+app.use(express.json());
+app.use("/api/customers", customerRoutes);
+app.use("/api/cylinder-types", cylinderTypeRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/deliveries", deliveryRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/reminders", reminderRoutes);
+app.use("/api/backups", backupRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/restore", restoreRoutes);
+app.use("/api/suppliers", supplierRoutes);
+app.use("/api/purchases", purchaseRoutes);
+
+
+
+
+
+app.get("/", (_req, res) => {
+  res.send("GasFlow API is running 🚀");
+});
+
+app.get("/api/health", async (_req, res) => {
+  try {
+    await prisma.orm.public.Users.all();
+
+    res.json({
+      success: true,
+      message: "GasFlow API and Database are connected"
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Database connection failed"
+    });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`GasFlow server running on http://localhost:${PORT}`);
+});

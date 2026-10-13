@@ -1,0 +1,266 @@
+
+.gf-edit-page {
+  min-height: 100vh;
+  padding: 32px;
+  background: #f4f7fb;
+  color: #17243b;
+}
+
+.gf-edit-hero {
+  padding: 30px;
+  margin-bottom: 24px;
+  border-radius: 20px;
+  color: #fff;
+  background: linear-gradient(120deg, #102b55, #1765b5);
+  box-shadow: 0 12px 30px rgba(16, 43, 85, 0.14);
+}
+
+.gf-edit-back {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: #e0edff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.gf-edit-back:hover {
+  color: #fff;
+}
+
+.gf-edit-eyebrow {
+  margin: 0 0 8px;
+  color: #b8d9ff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.gf-edit-hero h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+}
+
+.gf-edit-hero > p:last-child {
+  margin: 0;
+  color: #e0edff;
+}
+
+.gf-edit-card {
+  padding: 28px;
+  border: 1px solid #e4eaf2;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(20, 45, 80, 0.05);
+}
+
+.gf-edit-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 22px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid #e8edf4;
+}
+
+.gf-edit-heading h2 {
+  margin: 0 0 6px;
+  font-size: 21px;
+}
+
+.gf-edit-heading p {
+  margin: 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.gf-edit-id {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #edf5ff;
+  color: #164f91;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.gf-edit-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.gf-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.gf-edit-field label {
+  color: #263852;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.gf-edit-field input,
+.gf-edit-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #d9e2ee;
+  border-radius: 10px;
+  outline: none;
+  background: #fff;
+  color: #17243b;
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.gf-edit-field input {
+  min-height: 46px;
+}
+
+.gf-edit-field textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.gf-edit-field input:focus,
+.gf-edit-field textarea:focus {
+  border-color: #2878ca;
+  box-shadow: 0 0 0 3px rgba(40, 120, 202, 0.12);
+}
+
+.gf-edit-field input::placeholder,
+.gf-edit-field textarea::placeholder {
+  color: #9aa8ba;
+}
+
+.gf-edit-field small {
+  color: #718096;
+  font-size: 12px;
+}
+
+.gf-edit-full {
+  grid-column: 1 / -1;
+}
+
+.gf-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 26px;
+  margin-top: 28px;
+  border-top: 1px solid #e8edf4;
+}
+
+.gf-edit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 11px 20px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.gf-edit-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.gf-edit-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.gf-edit-cancel {
+  border-color: #d6e0ed;
+  background: #fff;
+  color: #164f91;
+}
+
+.gf-edit-cancel:hover {
+  background: #edf5ff;
+}
+
+.gf-edit-save {
+  background: #1765b5;
+  color: #fff;
+}
+
+.gf-edit-save:hover:not(:disabled) {
+  background: #124f91;
+}
+
+.gf-edit-alert {
+  padding: 13px 15px;
+  margin-bottom: 22px;
+  border: 1px solid #f3c5c5;
+  border-radius: 10px;
+  background: #fff0f0;
+  color: #a92323;
+  font-size: 14px;
+}
+
+.gf-edit-error-card h1 {
+  margin-top: 0;
+}
+
+.gf-edit-error-card p {
+  margin-bottom: 20px;
+  color: #a92323;
+}
+
+.gf-edit-state {
+  padding: 48px 24px;
+  text-align: center;
+  color: #52637a;
+}
+
+@media (max-width: 640px) {
+  .gf-edit-page {
+    padding: 16px;
+  }
+
+  .gf-edit-hero,
+  .gf-edit-card {
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  .gf-edit-hero h1 {
+    font-size: 26px;
+  }
+
+  .gf-edit-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .gf-edit-form-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .gf-edit-full {
+    grid-column: auto;
+  }
+
+  .gf-edit-actions {
+    flex-direction: column-reverse;
+  }
+
+  .gf-edit-actions .gf-edit-button {
+    width: 100%;
+  }
+}

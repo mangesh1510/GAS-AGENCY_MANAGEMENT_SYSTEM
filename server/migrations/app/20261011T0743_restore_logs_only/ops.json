@@ -1,0 +1,141 @@
+[
+  {
+    "id": "createNativeEnumType.RestoreStatus",
+    "label": "Create enum type \"RestoreStatus\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "RestoreStatus"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"RestoreStatus\"",
+        "sql": "CREATE TYPE \"public\".\"RestoreStatus\" AS ENUM ('SUCCESS', 'FAILED')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.restore_logs",
+    "label": "Create table \"restore_logs\"",
+    "summary": "Creates table \"restore_logs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "restore_logs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"restore_logs\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"restore_logs\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"restore_logs\"",
+        "sql": "CREATE TABLE \"public\".\"restore_logs\" (\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"fileName\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"message\" text,\n  \"restoredBy\" int4,\n  \"status\" \"RestoreStatus\" NOT NULL,\n  \"targetDatabase\" text NOT NULL,\n  CONSTRAINT \"restore_logs_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"restore_logs\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"restore_logs\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.restore_logs.restore_logs_createdAt_idx",
+    "label": "Create index \"restore_logs_createdAt_idx\" on \"restore_logs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "restore_logs_createdAt_idx",
+        "table": "restore_logs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"restore_logs_createdAt_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"restore_logs_createdAt_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"restore_logs_createdAt_idx\"",
+        "sql": "CREATE INDEX \"restore_logs_createdAt_idx\" ON \"public\".\"restore_logs\" (\"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"restore_logs_createdAt_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"restore_logs_createdAt_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.restore_logs.restore_logs_status_idx",
+    "label": "Create index \"restore_logs_status_idx\" on \"restore_logs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "restore_logs_status_idx",
+        "table": "restore_logs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"restore_logs_status_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"restore_logs_status_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"restore_logs_status_idx\"",
+        "sql": "CREATE INDEX \"restore_logs_status_idx\" ON \"public\".\"restore_logs\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"restore_logs_status_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"restore_logs_status_idx\""
+        ]
+      }
+    ]
+  }
+]

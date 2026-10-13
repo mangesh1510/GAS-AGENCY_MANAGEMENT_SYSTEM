@@ -1,0 +1,371 @@
+
+.purchases-page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 32px;
+  color: #1f2937;
+}
+
+.purchases-header,
+.purchase-list-header,
+.purchase-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.purchases-header {
+  margin-bottom: 28px;
+}
+
+.purchases-header h1 {
+  margin: 6px 0;
+  font-size: clamp(26px, 3vw, 36px);
+}
+
+.purchases-header p {
+  color: #64748b;
+}
+
+.purchases-eyebrow {
+  color: #2563eb !important;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.purchases-back {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.purchase-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.purchase-stats article,
+.purchase-panel {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 4px 16px rgb(15 23 42 / 4%);
+}
+
+.purchase-stats article span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.purchase-stats article strong {
+  font-size: 26px;
+  overflow-wrap: anywhere;
+}
+
+.purchase-panel {
+  margin-bottom: 24px;
+}
+
+.purchase-panel h2 {
+  margin: 0 0 20px;
+  font-size: 21px;
+}
+
+.purchase-panel h3 {
+  margin: 24px 0 14px;
+}
+
+.purchase-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.purchase-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.purchase-panel input,
+.purchase-panel select {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.purchase-panel input:focus,
+.purchase-panel select:focus {
+  outline: 2px solid #bfdbfe;
+  border-color: #2563eb;
+}
+
+.purchase-item-row {
+  display: grid;
+  grid-template-columns: 1.1fr 0.7fr 0.8fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.purchase-primary,
+.purchase-secondary,
+.purchase-receive,
+.purchase-cancel,
+.purchase-remove {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.purchase-primary {
+  background: #2563eb;
+  color: white;
+}
+
+.purchase-secondary {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.purchase-receive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.purchase-cancel,
+.purchase-remove {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.purchase-primary:disabled,
+.purchase-secondary:disabled,
+.purchase-receive:disabled,
+.purchase-cancel:disabled,
+.purchase-remove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.purchase-form-actions {
+  justify-content: flex-end;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.purchase-alert {
+  margin-bottom: 18px;
+  padding: 13px 16px;
+  border-radius: 8px;
+}
+
+.purchase-alert.error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.purchase-alert.success {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.purchase-status {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.purchase-status.draft {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.purchase-status.ordered {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.purchase-status.received {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.purchase-status.cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.purchase-table-wrapper {
+  overflow-x: auto;
+}
+
+.purchase-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.purchase-table th,
+.purchase-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.purchase-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.purchase-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .purchase-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .purchase-item-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .purchases-page {
+    padding: 16px;
+  }
+
+  .purchases-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .purchase-form-grid,
+  .purchase-stats,
+  .purchase-item-row {
+    grid-template-columns: 1fr;
+  }
+
+  .purchase-form-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+.supplier-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.purchase-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.purchase-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.purchase-table th,
+.purchase-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.purchase-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.supplier-status-active,
+.supplier-status-inactive {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.supplier-status-active {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.supplier-status-inactive {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.supplier-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.supplier-pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.supplier-empty {
+  padding: 30px 10px;
+  text-align: center;
+}
+
+.supplier-error {
+  color: #b91c1c;
+}
+
+.supplier-back-link {
+  margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+  .supplier-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .supplier-pagination-buttons {
+    flex-wrap: wrap;
+  }
+}

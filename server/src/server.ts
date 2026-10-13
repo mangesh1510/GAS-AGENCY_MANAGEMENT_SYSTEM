@@ -17,9 +17,19 @@ import purchaseRoutes from "./routes/purchase.routes.js";
 
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+//const PORT = process.env.PORT || 5000;
+
+//app.use(cors());
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL
+      ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+      : "http://localhost:5173",
+  })
+);
+
 app.use(express.json());
 app.use("/api/customers", customerRoutes);
 app.use("/api/cylinder-types", cylinderTypeRoutes);
@@ -61,6 +71,8 @@ app.get("/api/health", async (_req, res) => {
 });
 
 
-app.listen(Number(PORT), "0.0.0.0", () => {
+/*app.listen(Number(PORT), "0.0.0.0", () => {
   console.log(`GasFlow API running on port ${PORT}`);
 });
+*/
+export default app;

@@ -58,12 +58,7 @@ const movementLabel = (value: string) =>
     letter.toUpperCase()
   );
 
-function formatCurrency(value: number | string | undefined) {
-  return `₹${Number(value ?? 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
+
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "An unexpected error occurred.";

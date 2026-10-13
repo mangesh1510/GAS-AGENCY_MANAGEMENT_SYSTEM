@@ -60,6 +60,7 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`GasFlow server running on http://localhost:${PORT}`);
+
+app.listen(Number(PORT), "0.0.0.0", () => {
+  console.log(`GasFlow API running on port ${PORT}`);
 });

@@ -790,7 +790,16 @@ export default function Purchases() {
                 <tbody>
                   {visibleRecentPurchases.map((purchase) => (
                     <tr key={purchase.id}>
-                      <td className="strong">#{purchase.id}</td>
+                      <td className="strong">
+                        <Link
+                          className="gf-purchase-details-link"
+                          to={`/purchases/${purchase.id}`}
+                          aria-label={`View details for purchase ${purchase.id}`}
+                          title="View purchase details"
+                        >
+                          #{purchase.id}
+                        </Link>
+                      </td>
                       <td>{purchase.supplierId}</td>
                       <td>{purchase.invoiceNumber || "—"}</td>
                       <td>
@@ -1196,6 +1205,23 @@ const purchaseStyles = `
   .gf-hero-btn:focus-visible {
     outline: 3px solid #a5b4fc;
     outline-offset: 2px;
+  }
+
+  .gf-purchase-details-link {
+    color: var(--brand);
+    font-weight: 800;
+    text-decoration: underline !important;
+    text-decoration-color: #c7d2fe !important;
+    text-underline-offset: 3px;
+    border-radius: 4px;
+  }
+  .gf-purchase-details-link:hover {
+    color: var(--brand-dark);
+    text-decoration-color: currentColor !important;
+  }
+  .gf-purchase-details-link:focus-visible {
+    outline: 2px solid #a5b4fc;
+    outline-offset: 3px;
   }
 
   /* Table */

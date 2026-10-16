@@ -44,6 +44,7 @@ import StaffManagement from "./pages/StaffManagement";
 import StaffPayments from "./pages/StaffPayments";
 
 import DashboardLayout from "./layouts/DashboardLayout";
+import PurchaseDetails from "./pages/PurchaseDetails";
 
 type UserRole = "ADMIN" | "STAFF";
 
@@ -255,6 +256,8 @@ export default function App() {
           <Route path="/purchases" element={<Purchases />} />
           <Route path="/purchases/all" element={<AllPurchases />} />
           <Route path="/suppliers" element={<Suppliers />} />
+          <Route path="/purchases/:id" element={<PurchaseDetails />} />
+          
           <Route
             path="/suppliers/:id/edit"
             element={<EditSupplier />}
@@ -278,6 +281,8 @@ export default function App() {
             />
           </Route>
         </Route>
+
+
       </Route>
 
       {/* Unknown routes */}

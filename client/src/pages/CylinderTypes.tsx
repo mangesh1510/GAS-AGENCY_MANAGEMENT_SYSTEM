@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -19,7 +18,9 @@ function CylinderTypes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
 
   const navigate = useNavigate();
 
@@ -109,10 +110,27 @@ function CylinderTypes() {
 
   const inactiveCount = cylinderTypes.length - activeCount;
 
+  const handleCardKeyDown = (
+    event: React.KeyboardEvent<HTMLElement>,
+    id: number
+  ) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      navigate(`/cylinder-types/${id}`);
+    }
+  };
+
+  const handleStatusFilter = (
+    filter: "all" | "active" | "inactive"
+  ) => {
+    setStatusFilter((current) => (current === filter ? "all" : filter));
+  };
+
   if (loading) {
     return (
       <div className="gasflow-page">
         <style>{styles}</style>
+
         <div className="loading-container">
           <div className="spinner" />
           <h2>Loading cylinder types...</h2>
@@ -126,42 +144,42 @@ function CylinderTypes() {
     <div className="gasflow-page">
       <style>{styles}</style>
 
-      <header className="topbar">
-        <Link to="/" className="brand">
-          <span className="brand-icon">G</span>
-          <span>GasFlow</span>
-        </Link>
-
-        <Link to="/" className="dashboard-link">
-          ← Back to Dashboard
-        </Link>
-      </header>
-
       <main className="page-container">
+        {/* Main hero section */}
         <section className="hero">
           <div className="hero-content">
+            <Link to="/dashboard" className="dashboard-link">
+              <span aria-hidden="true">←</span> Back to Dashboard
+            </Link>
+
             <span className="eyebrow">INVENTORY CONFIGURATION</span>
+
             <h1>Cylinder Types</h1>
+
             <p>
               Manage cylinder capacities, selling prices, and availability
               for your gas agency.
             </p>
 
             <Link to="/cylinder-types/new" className="primary-button">
-              <span>＋</span> Add Cylinder Type
+              <span aria-hidden="true">＋</span>
+              Add Cylinder Type
             </Link>
           </div>
 
-          <div className="hero-decoration">
+          <div className="hero-decoration" aria-hidden="true">
             <div className="cylinder-illustration">
               <div className="cylinder-neck" />
+
               <div className="cylinder-body">
                 <div className="cylinder-label">GAS</div>
                 <div className="cylinder-line" />
                 <div className="cylinder-line short" />
               </div>
+
               <div className="cylinder-base" />
             </div>
+
             <div className="floating-badge">
               <span className="online-dot" />
               Inventory Overview
@@ -169,39 +187,88 @@ function CylinderTypes() {
           </div>
         </section>
 
-        <section className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon purple">▤</div>
-            <div>
+        {/* Summary cards */}
+        <section className="stats-grid" aria-label="Cylinder type statistics">
+          <button
+            type="button"
+            className={`stat-card ${
+              statusFilter === "all" ? "selected" : ""
+            }`}
+            onClick={() => handleStatusFilter("all")}
+            aria-pressed={statusFilter === "all"}
+          >
+            <div className="stat-icon purple" aria-hidden="true">
+              ▤
+            </div>
+
+            <div className="stat-details">
               <p>Total Cylinder Types</p>
               <h2>{cylinderTypes.length}</h2>
+              <span className="stat-hint">
+                {statusFilter === "all" ? "Showing all types" : "View all types"}
+              </span>
             </div>
-          </div>
+          </button>
 
-          <div className="stat-card">
-            <div className="stat-icon green">✓</div>
-            <div>
+          <button
+            type="button"
+            className={`stat-card ${
+              statusFilter === "active" ? "selected active-selected" : ""
+            }`}
+            onClick={() => handleStatusFilter("active")}
+            aria-pressed={statusFilter === "active"}
+          >
+            <div className="stat-icon green" aria-hidden="true">
+              ✓
+            </div>
+
+            <div className="stat-details">
               <p>Active Types</p>
               <h2>{activeCount}</h2>
+              <span className="stat-hint">
+                {statusFilter === "active"
+                  ? "Showing active types"
+                  : "Click to view active"}
+              </span>
             </div>
-          </div>
+          </button>
 
-          <div className="stat-card">
-            <div className="stat-icon orange">◷</div>
-            <div>
+          <button
+            type="button"
+            className={`stat-card ${
+              statusFilter === "inactive"
+                ? "selected inactive-selected"
+                : ""
+            }`}
+            onClick={() => handleStatusFilter("inactive")}
+            aria-pressed={statusFilter === "inactive"}
+          >
+            <div className="stat-icon orange" aria-hidden="true">
+              ◷
+            </div>
+
+            <div className="stat-details">
               <p>Inactive Types</p>
               <h2>{inactiveCount}</h2>
+              <span className="stat-hint">
+                {statusFilter === "inactive"
+                  ? "Showing inactive types"
+                  : "Click to view inactive"}
+              </span>
             </div>
-          </div>
+          </button>
         </section>
 
+        {/* Error message */}
         {error && (
           <div className="alert alert-error" role="alert">
             <span className="alert-icon">!</span>
+
             <div>
               <strong>Unable to load cylinder types</strong>
               <p>{error}</p>
             </div>
+
             <button
               type="button"
               className="retry-button"
@@ -212,20 +279,37 @@ function CylinderTypes() {
           </div>
         )}
 
+        {/* Cylinder types */}
         <section className="content-card">
           <div className="section-heading">
             <div>
               <h2>Your Cylinder Types</h2>
+
               <p>
                 {filteredCylinderTypes.length} of {cylinderTypes.length} types
                 displayed
               </p>
             </div>
+
+            {statusFilter !== "all" && (
+              <button
+                type="button"
+                className="clear-status-button"
+                onClick={() => setStatusFilter("all")}
+              >
+                Showing {statusFilter === "active" ? "Active" : "Inactive"}{" "}
+                <span aria-hidden="true">×</span>
+              </button>
+            )}
           </div>
 
+          {/* Search and filter */}
           <div className="toolbar">
             <div className="search-box">
-              <span className="search-icon">⌕</span>
+              <span className="search-icon" aria-hidden="true">
+                ⌕
+              </span>
+
               <input
                 type="search"
                 placeholder="Search by name or capacity..."
@@ -237,7 +321,11 @@ function CylinderTypes() {
 
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
+              onChange={(event) =>
+                setStatusFilter(
+                  event.target.value as "all" | "active" | "inactive"
+                )
+              }
               className="status-select"
               aria-label="Filter by status"
             >
@@ -247,22 +335,36 @@ function CylinderTypes() {
             </select>
           </div>
 
+          {/* Empty states */}
           {cylinderTypes.length === 0 && !error ? (
             <div className="empty-state">
-              <div className="empty-icon">▤</div>
+              <div className="empty-icon" aria-hidden="true">
+                ▤
+              </div>
+
               <h3>No cylinder types yet</h3>
+
               <p>
                 Add your first cylinder type to start configuring your
                 inventory.
               </p>
+
               <Link to="/cylinder-types/new" className="primary-button">
                 ＋ Add Your First Cylinder
               </Link>
             </div>
           ) : filteredCylinderTypes.length === 0 ? (
             <div className="empty-state compact">
+              <div className="empty-icon" aria-hidden="true">
+                ⌕
+              </div>
+
               <h3>No matching cylinder types</h3>
-              <p>Try another search term or change the status filter.</p>
+
+              <p>
+                Try another search term or change the status filter.
+              </p>
+
               <button
                 type="button"
                 className="secondary-button"
@@ -280,9 +382,18 @@ function CylinderTypes() {
                 <article
                   className="cylinder-card"
                   key={cylinderType.id}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`View details for ${cylinderType.name}`}
+                  onClick={() =>
+                    navigate(`/cylinder-types/${cylinderType.id}`)
+                  }
+                  onKeyDown={(event) =>
+                    handleCardKeyDown(event, cylinderType.id)
+                  }
                 >
                   <div className="card-top">
-                    <div className="mini-cylinder">
+                    <div className="mini-cylinder" aria-hidden="true">
                       <span />
                       <div />
                     </div>
@@ -299,16 +410,20 @@ function CylinderTypes() {
 
                   <div className="cylinder-info">
                     <p className="card-label">CYLINDER TYPE</p>
+
                     <h3>{cylinderType.name}</h3>
 
                     <div className="capacity-row">
                       <span>Capacity</span>
-                      <strong>{cylinderType.capacityKg} kg</strong>
+                      <strong>
+                        {Number(cylinderType.capacityKg).toFixed(2)} kg
+                      </strong>
                     </div>
                   </div>
 
                   <div className="price-panel">
                     <span>Selling Price</span>
+
                     <strong>
                       ₹
                       {Number(cylinderType.sellingPrice).toLocaleString(
@@ -326,12 +441,9 @@ function CylinderTypes() {
                       Type ID: #{cylinderType.id}
                     </span>
 
-                    <Link
-                      to={`/cylinder-types/${cylinderType.id}`}
-                      className="view-link"
-                    >
-                      View Details <span>→</span>
-                    </Link>
+                    <span className="card-open-hint">
+                      View details <span aria-hidden="true">→</span>
+                    </span>
                   </div>
                 </article>
               ))}
@@ -358,63 +470,19 @@ const styles = `
     background: #f5f6fb;
     color: #20233a;
     font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    padding-bottom: 30px;
-  }
-
-  .topbar {
-    min-height: 72px;
-    padding: 0 6%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    background: #fff;
-    border-bottom: 1px solid #ececf4;
-  }
-
-  .brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    color: #24213f;
-    font-weight: 800;
-    font-size: 21px;
-    letter-spacing: -0.5px;
-  }
-
-  .brand-icon {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    color: white;
-    background: linear-gradient(135deg, #6157d9, #8b5cf6);
-    box-shadow: 0 5px 12px #7662dc40;
-  }
-
-  .dashboard-link {
-    color: #65647b;
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 650;
-  }
-
-  .dashboard-link:hover,
-  .view-link:hover {
-    color: #6556d9;
+    padding: 1px 0 30px;
   }
 
   .page-container {
     max-width: 1240px;
     width: 88%;
-    margin: 30px auto 0;
+    margin: 29px auto 0;
   }
 
+  /* Hero */
   .hero {
     min-height: 255px;
-    padding: 36px 42px;
+    padding: 30px 42px;
     border-radius: 23px;
     overflow: hidden;
     position: relative;
@@ -456,8 +524,31 @@ const styles = `
     max-width: 620px;
   }
 
+  .dashboard-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 22px;
+    color: #e1dcff;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 700;
+    transition: color 0.2s, transform 0.2s;
+  }
+
+  .dashboard-link:hover {
+    color: #fff;
+    transform: translateX(-2px);
+  }
+
+  .dashboard-link:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 4px;
+    border-radius: 3px;
+  }
+
   .eyebrow {
-    display: inline-block;
+    display: block;
     margin-bottom: 12px;
     color: #d5d0ff;
     font-size: 10px;
@@ -597,12 +688,14 @@ const styles = `
     height: 7px;
     border-radius: 50%;
     display: inline-block;
+    flex-shrink: 0;
   }
 
   .online-dot {
     background: #75edbd;
   }
 
+  /* Statistics cards */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -611,20 +704,53 @@ const styles = `
   }
 
   .stat-card {
-    min-height: 105px;
+    width: 100%;
+    min-width: 0;
+    min-height: 115px;
     display: flex;
     align-items: center;
     gap: 15px;
-    padding: 22px;
+    padding: 20px;
+    text-align: left;
     background: #fff;
     border: 1px solid #ececf4;
     border-radius: 16px;
     box-shadow: 0 4px 12px #27204a05;
+    font: inherit;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    border-color: #d5cef8;
+    box-shadow: 0 8px 20px #39306c10;
+  }
+
+  .stat-card:focus-visible {
+    outline: 3px solid #8271e5;
+    outline-offset: 3px;
+  }
+
+  .stat-card.selected {
+    border-color: #7966dd;
+    box-shadow: 0 0 0 2px #7966dd1a, 0 8px 20px #39306c0a;
+  }
+
+  .stat-card.active-selected {
+    border-color: #35ad7b;
+    box-shadow: 0 0 0 2px #35ad7b1a;
+  }
+
+  .stat-card.inactive-selected {
+    border-color: #e5a04d;
+    box-shadow: 0 0 0 2px #e5a04d1a;
   }
 
   .stat-icon {
     width: 46px;
     height: 46px;
+    flex-shrink: 0;
     display: grid;
     place-items: center;
     border-radius: 14px;
@@ -647,6 +773,10 @@ const styles = `
     color: #d77b2e;
   }
 
+  .stat-details {
+    min-width: 0;
+  }
+
   .stat-card p {
     margin: 0 0 6px;
     color: #85849a;
@@ -662,6 +792,14 @@ const styles = `
     letter-spacing: -0.7px;
   }
 
+  .stat-hint {
+    display: block;
+    margin-top: 8px;
+    color: #8b879f;
+    font-size: 10px;
+  }
+
+  /* Main content */
   .content-card {
     padding: 28px;
     border: 1px solid #ececf4;
@@ -688,6 +826,26 @@ const styles = `
     margin: 0;
     color: #9290a3;
     font-size: 12px;
+  }
+
+  .clear-status-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+    border: 1px solid #e3defb;
+    border-radius: 9px;
+    background: #f7f5ff;
+    color: #6553cc;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .clear-status-button span {
+    font-size: 17px;
   }
 
   .toolbar {
@@ -745,6 +903,12 @@ const styles = `
     outline: none;
   }
 
+  .status-select:focus-visible {
+    border-color: #8271e5;
+    box-shadow: 0 0 0 3px #8271e51a;
+  }
+
+  /* Cylinder cards */
   .cylinder-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -757,13 +921,19 @@ const styles = `
     border: 1px solid #eae9f3;
     border-radius: 15px;
     background: linear-gradient(150deg, #fff 55%, #faf9ff);
+    cursor: pointer;
     transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
   }
 
   .cylinder-card:hover {
     transform: translateY(-3px);
-    border-color: #d4cef8;
-    box-shadow: 0 10px 24px #43368a0c;
+    border-color: #bfb3fa;
+    box-shadow: 0 10px 24px #43368a12;
+  }
+
+  .cylinder-card:focus-visible {
+    outline: 3px solid #8271e5;
+    outline-offset: 3px;
   }
 
   .card-top {
@@ -893,20 +1063,25 @@ const styles = `
     font-size: 10px;
   }
 
-  .view-link {
+  .card-open-hint {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     color: #6654d2;
-    text-decoration: none;
     font-size: 11px;
     font-weight: 750;
   }
 
-  .view-link span {
+  .card-open-hint span {
     font-size: 16px;
+    transition: transform 0.2s;
   }
 
+  .cylinder-card:hover .card-open-hint span {
+    transform: translateX(3px);
+  }
+
+  /* Empty states */
   .empty-state {
     min-height: 280px;
     padding: 35px 18px;
@@ -965,6 +1140,7 @@ const styles = `
     cursor: pointer;
   }
 
+  /* Error */
   .alert {
     display: flex;
     align-items: center;
@@ -1009,6 +1185,7 @@ const styles = `
     color: #9c3434;
   }
 
+  /* Footer and loading */
   .page-footer {
     display: flex;
     align-items: center;
@@ -1067,15 +1244,6 @@ const styles = `
   }
 
   @media (max-width: 700px) {
-    .topbar {
-      min-height: 64px;
-      padding: 0 5%;
-    }
-
-    .brand {
-      font-size: 18px;
-    }
-
     .page-container {
       width: 92%;
       margin-top: 18px;
@@ -1083,7 +1251,7 @@ const styles = `
 
     .hero {
       min-height: auto;
-      padding: 27px 23px;
+      padding: 25px 23px;
       border-radius: 17px;
     }
 
@@ -1106,13 +1274,18 @@ const styles = `
     }
 
     .stat-card {
-      min-height: 82px;
-      padding: 17px;
+      min-height: 88px;
+      padding: 16px;
     }
 
     .content-card {
       padding: 19px 15px;
       border-radius: 15px;
+    }
+
+    .section-heading {
+      align-items: flex-start;
+      flex-wrap: wrap;
     }
 
     .toolbar {

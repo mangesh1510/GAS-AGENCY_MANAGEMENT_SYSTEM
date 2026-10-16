@@ -133,8 +133,68 @@ router.get("/payments", async (req, res) => {
   }
 });
 
-/* GET DAILY BUSINESS CLOSING */
 router.get("/daily-closing", async (req, res) => {
+  const today = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Kolkata",
+  });
+
+  const startDate =
+    typeof req.query.startDate === "string"
+      ? req.query.startDate
+      : today;
+
+  const endDate =
+    typeof req.query.endDate === "string"
+      ? req.query.endDate
+      : typeof req.query.date === "string"
+        ? req.query.date
+        : today;
+
+  const isValidDate = (value: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return false;
+    }
+
+    const parsed = new Date(`${value}T00:00:00Z`);
+
+    return (
+      !Number.isNaN(parsed.getTime()) &&
+      parsed.toISOString().slice(0, 10) === value
+    );
+  };
+
+  if (
+    !isValidDate(startDate) ||
+    !isValidDate(endDate) ||
+    startDate > endDate
+  ) {
+    return res.status(400).json({
+      error: "INVALID_CLOSING_DATE_RANGE",
+      message:
+        "Provide valid dates with startDate less than or equal to endDate.",
+    });
+  }
+
+  try {
+    const report = await getDailyBusinessClosing(
+      startDate,
+      endDate
+    );
+
+    return res.json(report);
+  } catch (error) {
+    console.error("Daily closing report error:", error);
+
+    return res.status(500).json({
+      error: "DAILY_CLOSING_FAILED",
+      message: "Unable to generate the daily closing report.",
+    });
+  }
+});
+
+
+/* GET DAILY BUSINESS CLOSING */
+/*router.get("/daily-closing", async (req, res) => {
   try {
     const date =
       typeof req.query.date === "string"
@@ -172,6 +232,7 @@ router.get("/daily-closing", async (req, res) => {
     });
   }
 });
+*/
 
 /* GET PROFIT ANALYSIS */
 router.get("/profit", async (req, res) => {

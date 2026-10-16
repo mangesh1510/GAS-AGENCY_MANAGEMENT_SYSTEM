@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 
-const API_URL = "http://localhost:5000/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api"
+).replace(/\/$/, "");
+
 const PAGE_SIZE = 10;
 
 type Delivery = {
@@ -28,21 +32,39 @@ type CylinderType = {
   capacityKg: string;
 };
 
+function getTodayKey() {
+  const now = new Date();
+
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function getDateKey(value: string) {
+  if (!value) return "";
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return value.slice(0, 10);
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 function Icon({
   name,
   size = 20,
 }: {
-  name:
-    | "truck"
-    | "plus"
-    | "search"
-    | "calendar"
-    | "rupee"
-    | "arrow"
-    | "eye"
-    | "edit"
-    | "refresh"
-    | "box";
+  name: "truck" | "plus" | "search" | "calendar" | "rupee" | "arrow" | "refresh" | "box";
   size?: number;
 }) {
   const paths: Record<string, string[]> = {
@@ -60,13 +82,12 @@ function Icon({
     calendar: ["M3 4h18v17H3z", "M16 2v4", "M8 2v4", "M3 10h18"],
     rupee: ["M6 3h12", "M6 8h12", "M6 13l8.5 8", "M6 13h3a4 4 0 0 0 0-8"],
     arrow: ["M5 12h14", "M13 6l6 6-6 6"],
-    eye: [
-      "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z",
-      "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
-    ],
-    edit: ["M12 20h9", "M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4z"],
     refresh: ["M21 12a9 9 0 1 1-3-6.7L21 8", "M21 3v5h-5"],
-    box: ["M21 8l-9-5-9 5v8l9 5 9-5z", "M3.3 7L12 12l8.7-5", "M12 22V12"],
+    box: [
+      "M21 8l-9-5-9 5v8l9 5 9-5z",
+      "M3.3 7L12 12l8.7-5",
+      "M12 22V12",
+    ],
   };
 
   return (
@@ -97,11 +118,12 @@ function formatCurrency(value: string | number) {
 }
 
 function formatDate(value: string) {
-  const date = new Date(value);
+  const key = getDateKey(value);
 
-  if (Number.isNaN(date.getTime())) {
-    return value || "—";
-  }
+  if (!key) return "—";
+
+  const [year, month, day] = key.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
 
   return date.toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -110,18 +132,15 @@ function formatDate(value: string) {
   });
 }
 
-/**
- * Sort by delivery date, newest first.
- * Use createdAt as a tie-breaker when delivery dates are equal,
- * then use the ID as a final tie-breaker.
- */
-function getDeliveryTimestamp(delivery: Delivery) {
-  const deliveryTime = new Date(delivery.deliveryDate).getTime();
+function formatKg(value: string | number) {
+  const number = Number(value);
 
-  return Number.isNaN(deliveryTime) ? 0 : deliveryTime;
+  return Number.isFinite(number) ? number.toFixed(2) : "0.00";
 }
 
 function Deliveries() {
+  const navigate = useNavigate();
+
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [cylinderTypes, setCylinderTypes] = useState<CylinderType[]>([]);
@@ -129,10 +148,15 @@ function Deliveries() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState(getTodayKey());
+
   const [currentPage, setCurrentPage] = useState(1);
 
-  async function loadData() {
+  const todayKey = getTodayKey();
+
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -161,15 +185,11 @@ function Deliveries() {
       ]);
 
       if (!deliveryResponse.ok) {
-        throw new Error(
-          deliveryData.message || "Failed to load deliveries."
-        );
+        throw new Error(deliveryData.message || "Failed to load deliveries.");
       }
 
       if (!customerResponse.ok) {
-        throw new Error(
-          customerData.message || "Failed to load customers."
-        );
+        throw new Error(customerData.message || "Failed to load customers.");
       }
 
       if (!cylinderResponse.ok) {
@@ -178,25 +198,63 @@ function Deliveries() {
         );
       }
 
-      setDeliveries(deliveryData.data ?? []);
-      setCustomers(customerData.data ?? []);
-      setCylinderTypes(cylinderData.data ?? []);
-    } catch (err) {
+      const deliveryList = Array.isArray(deliveryData)
+        ? deliveryData
+        : deliveryData.data;
+
+      const customerList = Array.isArray(customerData)
+        ? customerData
+        : customerData.data;
+
+      const cylinderList = Array.isArray(cylinderData)
+        ? cylinderData
+        : cylinderData.data;
+
+      if (
+        !Array.isArray(deliveryList) ||
+        !Array.isArray(customerList) ||
+        !Array.isArray(cylinderList)
+      ) {
+        throw new Error("The server returned an unexpected response.");
+      }
+
+      setDeliveries(deliveryList);
+      setCustomers(customerList);
+      setCylinderTypes(cylinderList);
+
+      setStartDate((currentStart) => {
+        if (currentStart) return currentStart;
+
+        const validDates = deliveryList
+          .map((delivery: Delivery) => getDateKey(delivery.deliveryDate))
+          .filter((date: string) => date && date <= todayKey)
+          .sort();
+
+        return validDates[0] || todayKey;
+      });
+    } catch (err: unknown) {
       console.error("Failed to load delivery data:", err);
 
       setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to load delivery data."
+        err instanceof Error ? err.message : "Failed to load delivery data."
       );
     } finally {
       setLoading(false);
     }
-  }
+  }, [todayKey]);
 
   useEffect(() => {
     void loadData();
-  }, []);
+  }, [loadData]);
+
+  const firstDeliveryDate = useMemo(() => {
+    const dates = deliveries
+      .map((delivery) => getDateKey(delivery.deliveryDate))
+      .filter((date) => date && date <= todayKey)
+      .sort();
+
+    return dates[0] || todayKey;
+  }, [deliveries, todayKey]);
 
   const getCustomerName = (customerId: number) =>
     customers.find((customer) => customer.id === customerId)?.name ??
@@ -208,34 +266,45 @@ function Deliveries() {
     );
 
     return cylinder
-      ? `${cylinder.name} (${cylinder.capacityKg} kg)`
+      ? `${cylinder.name} (${formatKg(cylinder.capacityKg)} kg)`
       : `Unknown cylinder (#${cylinderTypeId})`;
   };
 
-  // Sort all deliveries newest first, without mutating React state.
-  const sortedDeliveries = useMemo(() => {
-    return [...deliveries].sort((a, b) => {
-      const dateDifference =
-        getDeliveryTimestamp(b) - getDeliveryTimestamp(a);
+  const dateRangeDeliveries = useMemo(() => {
+    if (startDate && endDate && startDate > endDate) return [];
 
-      if (dateDifference !== 0) {
-        return dateDifference;
-      }
+    return deliveries.filter((delivery) => {
+      const deliveryDate = getDateKey(delivery.deliveryDate);
+
+      if (!deliveryDate) return false;
+      if (startDate && deliveryDate < startDate) return false;
+      if (endDate && deliveryDate > endDate) return false;
+
+      return true;
+    });
+  }, [deliveries, startDate, endDate]);
+
+  const sortedDeliveries = useMemo(() => {
+    return [...dateRangeDeliveries].sort((a, b) => {
+      const dateDifference =
+        new Date(b.deliveryDate).getTime() -
+        new Date(a.deliveryDate).getTime();
+
+      if (dateDifference !== 0) return dateDifference;
 
       const createdA = new Date(a.createdAt).getTime() || 0;
       const createdB = new Date(b.createdAt).getTime() || 0;
 
-      if (createdA !== createdB) {
-        return createdB - createdA;
-      }
+      if (createdA !== createdB) return createdB - createdA;
 
       return b.id - a.id;
     });
-  }, [deliveries]);
+  }, [dateRangeDeliveries]);
 
-  // Apply search and date filters before pagination.
   const filteredDeliveries = useMemo(() => {
     const query = search.trim().toLowerCase();
+
+    if (!query) return sortedDeliveries;
 
     return sortedDeliveries.filter((delivery) => {
       const customerName = getCustomerName(delivery.customerId).toLowerCase();
@@ -243,33 +312,20 @@ function Deliveries() {
         delivery.cylinderTypeId
       ).toLowerCase();
 
-      const matchesSearch =
-        !query ||
+      return (
         String(delivery.id).includes(query) ||
         customerName.includes(query) ||
         cylinderName.includes(query) ||
-        String(delivery.note ?? "").toLowerCase().includes(query);
-
-      const matchesDate =
-        !dateFilter ||
-        delivery.deliveryDate.slice(0, 10) === dateFilter;
-
-      return matchesSearch && matchesDate;
+        String(delivery.note ?? "").toLowerCase().includes(query)
+      );
     });
-  }, [
-    sortedDeliveries,
-    customers,
-    cylinderTypes,
-    search,
-    dateFilter,
-  ]);
+  }, [sortedDeliveries, customers, cylinderTypes, search]);
 
   const totalPages = Math.max(
     1,
     Math.ceil(filteredDeliveries.length / PAGE_SIZE)
   );
 
-  // Keep the selected page valid when filters or data change.
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
@@ -289,41 +345,52 @@ function Deliveries() {
     filteredDeliveries.length
   );
 
-  // Summary cards use the full dataset, except filtered totals.
-  const totalQuantity = filteredDeliveries.reduce(
+  const totalQuantity = dateRangeDeliveries.reduce(
     (total, delivery) => total + Number(delivery.quantity || 0),
     0
   );
 
-  const totalValue = filteredDeliveries.reduce(
+  const totalValue = dateRangeDeliveries.reduce(
     (total, delivery) => total + Number(delivery.totalAmount || 0),
     0
   );
 
-  const today = new Date();
-  const todayKey = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
-
   const todaysCount = deliveries.filter(
-    (delivery) => delivery.deliveryDate.slice(0, 10) === todayKey
+    (delivery) => getDateKey(delivery.deliveryDate) === todayKey
   ).length;
+
+  const selectAllDates = () => {
+    setStartDate(firstDeliveryDate);
+    setEndDate(todayKey);
+    setSearch("");
+    setCurrentPage(1);
+  };
+
+  const selectToday = () => {
+    setStartDate(todayKey);
+    setEndDate(todayKey);
+    setSearch("");
+    setCurrentPage(1);
+  };
+
+  const openDelivery = (deliveryId: number) => {
+    navigate(`/deliveries/${deliveryId}`);
+  };
 
   const pageNumbers = Array.from(
     { length: totalPages },
     (_, index) => index + 1
   );
 
+  const invalidRange = Boolean(startDate && endDate && startDate > endDate);
+
   return (
     <div className="gf-deliveries">
       <style>{styles}</style>
 
-      {/* Page header */}
       <header className="gd-hero">
         <div className="gd-hero-content">
-          <Link to="/" className="gd-back">
+          <Link to="/dashboard" className="gd-back">
             <Icon name="arrow" size={15} />
             Back to Dashboard
           </Link>
@@ -347,7 +414,6 @@ function Deliveries() {
         </Link>
       </header>
 
-      {/* Error */}
       {error && (
         <div className="gd-error" role="alert">
           <div>
@@ -372,29 +438,48 @@ function Deliveries() {
         </div>
       )}
 
-      {/* Summary cards */}
       <section className="gd-stats">
-        <div className="gd-stat-card">
+        <button
+          type="button"
+          className={`gd-stat-card gd-stat-clickable ${
+            startDate === firstDeliveryDate && endDate === todayKey
+              ? "gd-stat-selected"
+              : ""
+          }`}
+          onClick={selectAllDates}
+          title="Show deliveries from the first recorded delivery through today"
+        >
           <span className="gd-stat-icon blue">
             <Icon name="truck" size={21} />
           </span>
           <div>
             <p>Total Deliveries</p>
-            <h2>{deliveries.length}</h2>
-            <span className="gd-stat-note">All recorded deliveries</span>
+            <h2>{dateRangeDeliveries.length}</h2>
+            <span className="gd-stat-note">
+              First delivery to today · Click to select
+            </span>
           </div>
-        </div>
+        </button>
 
-        <div className="gd-stat-card">
+        <button
+          type="button"
+          className={`gd-stat-card gd-stat-clickable ${
+            startDate === todayKey && endDate === todayKey
+              ? "gd-stat-selected"
+              : ""
+          }`}
+          onClick={selectToday}
+          title="Show only today's deliveries"
+        >
           <span className="gd-stat-icon green">
             <Icon name="calendar" size={21} />
           </span>
           <div>
             <p>Today's Deliveries</p>
             <h2>{todaysCount}</h2>
-            <span className="gd-stat-note">Recorded today</span>
+            <span className="gd-stat-note">Click to select today's date</span>
           </div>
-        </div>
+        </button>
 
         <div className="gd-stat-card">
           <span className="gd-stat-icon purple">
@@ -403,7 +488,7 @@ function Deliveries() {
           <div>
             <p>Filtered Quantity</p>
             <h2>{totalQuantity}</h2>
-            <span className="gd-stat-note">Cylinder quantity</span>
+            <span className="gd-stat-note">Selected date range</span>
           </div>
         </div>
 
@@ -414,17 +499,16 @@ function Deliveries() {
           <div>
             <p>Filtered Delivery Value</p>
             <h2 className="gd-money">{formatCurrency(totalValue)}</h2>
-            <span className="gd-stat-note">Based on filtered records</span>
+            <span className="gd-stat-note">Selected date range</span>
           </div>
         </div>
       </section>
 
-      {/* Delivery table */}
       <section className="gd-panel">
         <div className="gd-panel-heading">
           <div>
             <h2>All Deliveries</h2>
-            <p>Newest deliveries appear first. Search and review records.</p>
+            <p>Choose a date range to review actual delivery records.</p>
           </div>
 
           <button
@@ -438,7 +522,70 @@ function Deliveries() {
           </button>
         </div>
 
-        {/* Search and date filters */}
+        <div className="gd-date-range">
+          <label className="gd-date-field">
+            <span>
+              <Icon name="calendar" size={17} />
+              Start Date
+            </span>
+            <input
+              type="date"
+              aria-label="Start date"
+              value={startDate}
+              max={endDate || todayKey}
+              onChange={(event) => {
+                setStartDate(event.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </label>
+
+          <label className="gd-date-field">
+            <span>
+              <Icon name="calendar" size={17} />
+              End Date
+            </span>
+            <input
+              type="date"
+              aria-label="End date"
+              value={endDate}
+              min={startDate || undefined}
+              max={todayKey}
+              onChange={(event) => {
+                setEndDate(event.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </label>
+
+          <button
+            type="button"
+            className="gd-range-reset"
+            onClick={selectAllDates}
+          >
+            All Dates
+          </button>
+
+          <button
+            type="button"
+            className="gd-range-reset"
+            onClick={selectToday}
+          >
+            Today
+          </button>
+        </div>
+
+        {invalidRange && (
+          <p className="gd-range-error" role="alert">
+            Start date cannot be later than end date.
+          </p>
+        )}
+
+        <div className="gd-range-summary">
+          Showing records from <strong>{formatDate(startDate)}</strong> to{" "}
+          <strong>{formatDate(endDate)}</strong>
+        </div>
+
         <div className="gd-filters">
           <label className="gd-search">
             <Icon name="search" size={18} />
@@ -453,30 +600,16 @@ function Deliveries() {
             />
           </label>
 
-          <label className="gd-date-filter">
-            <Icon name="calendar" size={17} />
-            <input
-              type="date"
-              aria-label="Filter by delivery date"
-              value={dateFilter}
-              onChange={(event) => {
-                setDateFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-            />
-          </label>
-
-          {(search || dateFilter) && (
+          {search && (
             <button
               type="button"
               className="gd-clear-btn"
               onClick={() => {
                 setSearch("");
-                setDateFilter("");
                 setCurrentPage(1);
               }}
             >
-              Clear filters
+              Clear search
             </button>
           )}
         </div>
@@ -491,6 +624,11 @@ function Deliveries() {
             <span className="gd-empty-symbol">!</span>
             <h3>Delivery records unavailable</h3>
             <p>Resolve the error above to view your records.</p>
+          </div>
+        ) : invalidRange ? (
+          <div className="gd-empty">
+            <h3>Invalid date range</h3>
+            <p>Select a start date on or before the end date.</p>
           </div>
         ) : filteredDeliveries.length === 0 ? (
           <div className="gd-empty">
@@ -507,7 +645,7 @@ function Deliveries() {
             <p>
               {deliveries.length === 0
                 ? "Create your first delivery to see it listed here."
-                : "Try changing your search or date filter."}
+                : "There are no deliveries matching your selected dates or search."}
             </p>
 
             {deliveries.length === 0 && (
@@ -531,13 +669,29 @@ function Deliveries() {
                     <th>Total Amount</th>
                     <th>Delivery Date</th>
                     <th>Note</th>
-                    <th>Actions</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {paginatedDeliveries.map((delivery) => (
-                    <tr key={delivery.id}>
+                    <tr
+                      key={delivery.id}
+                      className="gd-delivery-row"
+                      tabIndex={0}
+                      role="link"
+                      aria-label={`View delivery ${delivery.id}`}
+                      onClick={() => openDelivery(delivery.id)}
+                      onKeyDown={(event) => {
+                        if (
+                          event.key === "Enter" ||
+                          event.key === " "
+                        ) {
+                          event.preventDefault();
+                          openDelivery(delivery.id);
+                        }
+                      }}
+                      title="Click to view delivery details"
+                    >
                       <td>
                         <span className="gd-id">#{delivery.id}</span>
                       </td>
@@ -582,31 +736,12 @@ function Deliveries() {
                       </td>
 
                       <td>
-                        <span className="gd-note" title={delivery.note ?? ""}>
+                        <span
+                          className="gd-note"
+                          title={delivery.note ?? ""}
+                        >
                           {delivery.note || "—"}
                         </span>
-                      </td>
-
-                      <td>
-                        <div className="gd-actions">
-                          <Link
-                            to={`/deliveries/${delivery.id}`}
-                            className="gd-icon-btn view"
-                            title="View delivery"
-                            aria-label={`View delivery ${delivery.id}`}
-                          >
-                            <Icon name="eye" size={17} />
-                          </Link>
-
-                          <Link
-                            to={`/deliveries/${delivery.id}/edit`}
-                            className="gd-icon-btn edit"
-                            title="Edit delivery"
-                            aria-label={`Edit delivery ${delivery.id}`}
-                          >
-                            <Icon name="edit" size={17} />
-                          </Link>
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -614,7 +749,6 @@ function Deliveries() {
               </table>
             </div>
 
-            {/* Pagination */}
             <div className="gd-pagination">
               <div className="gd-pagination-info">
                 Showing <strong>{firstRecord}–{lastRecord}</strong> of{" "}
@@ -675,7 +809,6 @@ const styles = `
     --gd-muted: #64748b;
     --gd-line: #e5e9f2;
     --gd-bg: #f4f6fb;
-    --gd-purple: #4f46e5;
     box-sizing: border-box;
     min-height: 100%;
     padding: clamp(16px, 2.4vw, 32px);
@@ -706,477 +839,150 @@ const styles = `
   }
 
   .gd-hero-content { min-width: 0; }
-
-  .gd-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    margin-bottom: 20px;
-    color: rgba(255,255,255,.8);
-    font-size: 12px;
-    font-weight: 650;
-  }
-
+  .gd-back { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 20px; color: rgba(255,255,255,.8); font-size: 12px; font-weight: 650; }
   .gd-back svg { transform: rotate(180deg); }
   .gd-back:hover { color: white; }
-
   .gd-title-row { display: flex; align-items: center; gap: 16px; }
 
   .gd-hero-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 60px;
-    height: 60px;
-    flex-shrink: 0;
-    color: white;
-    background: rgba(255,255,255,.14);
-    border: 1px solid rgba(255,255,255,.2);
+    display: flex; align-items: center; justify-content: center;
+    width: 60px; height: 60px; flex-shrink: 0; color: white;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.2);
     border-radius: 16px;
   }
 
-  .gd-eyebrow {
-    display: block;
-    margin-bottom: 5px;
-    color: #c7d2fe;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 1.3px;
-  }
-
-  .gf-deliveries .gd-hero h1 {
-    margin: 0;
-    color: white;
-    font-size: clamp(26px, 3vw, 34px);
-    font-weight: 800;
-    line-height: 1.2;
-    letter-spacing: -.8px;
-  }
-
-  .gf-deliveries .gd-hero p {
-    margin: 7px 0 0;
-    color: rgba(255,255,255,.78);
-    font-size: 13px;
-  }
+  .gd-eyebrow { display: block; margin-bottom: 5px; color: #c7d2fe; font-size: 10px; font-weight: 800; letter-spacing: 1.3px; }
+  .gf-deliveries .gd-hero h1 { margin: 0; color: white; font-size: clamp(26px, 3vw, 34px); font-weight: 800; line-height: 1.2; letter-spacing: -.8px; }
+  .gf-deliveries .gd-hero p { margin: 7px 0 0; color: rgba(255,255,255,.78); font-size: 13px; }
 
   .gd-primary-btn {
-    display: inline-flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
-    min-height: 43px;
-    padding: 11px 17px;
-    color: white;
-    background: #4f46e5;
-    border: 1px solid transparent;
-    border-radius: 11px;
-    font-size: 13px;
-    font-weight: 750;
-    transition: transform .15s ease, background .15s ease;
+    display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center;
+    gap: 9px; min-height: 43px; padding: 11px 17px; color: white;
+    background: #4f46e5; border: 1px solid transparent; border-radius: 11px;
+    font-size: 13px; font-weight: 750; transition: transform .15s ease, background .15s ease;
   }
 
   .gd-hero .gd-primary-btn { color: #3730a3; background: white; }
-
-  .gd-primary-btn:hover {
-    background: #4338ca;
-    color: white;
-    transform: translateY(-1px);
-  }
-
+  .gd-primary-btn:hover { background: #4338ca; color: white; transform: translateY(-1px); }
   .gd-hero .gd-primary-btn:hover { color: #312e81; background: #eef2ff; }
 
-  .gd-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
-    margin-bottom: 26px;
-  }
+  .gd-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 26px; }
 
   .gd-stat-card {
-    display: flex;
-    align-items: flex-start;
-    gap: 13px;
-    min-width: 0;
-    padding: 20px;
-    background: white;
-    border: 1px solid var(--gd-line);
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(15,23,42,.025);
+    display: flex; align-items: flex-start; gap: 13px; min-width: 0;
+    padding: 20px; background: white; border: 1px solid var(--gd-line);
+    border-radius: 16px; box-shadow: 0 2px 8px rgba(15,23,42,.025);
   }
 
-  .gd-stat-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 43px;
-    height: 43px;
-    flex-shrink: 0;
-    border-radius: 12px;
+  .gd-stat-clickable {
+    width: 100%; text-align: left; color: inherit; font: inherit; cursor: pointer;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
   }
 
+  .gd-stat-clickable:hover { border-color: #a5b4fc; box-shadow: 0 8px 20px rgba(79,70,229,.10); transform: translateY(-2px); }
+  .gd-stat-clickable:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 3px; }
+  .gd-stat-selected { border-color: #818cf8; box-shadow: inset 0 0 0 1px #818cf8; }
+
+  .gd-stat-icon { display: flex; align-items: center; justify-content: center; width: 43px; height: 43px; flex-shrink: 0; border-radius: 12px; }
   .gd-stat-icon.blue { color: #4338ca; background: #e0e7ff; }
   .gd-stat-icon.green { color: #15803d; background: #dcfce7; }
   .gd-stat-icon.purple { color: #7e22ce; background: #f3e8ff; }
   .gd-stat-icon.teal { color: #0f766e; background: #ccfbf1; }
 
-  .gd-stat-card p {
-    margin: 1px 0 6px;
-    color: var(--gd-muted);
-    font-size: 12px;
-    font-weight: 650;
-  }
-
-  .gd-stat-card h2 {
-    margin: 0;
-    color: var(--gd-ink);
-    font-size: clamp(22px, 2vw, 30px);
-    font-weight: 800;
-    line-height: 1.25;
-    letter-spacing: -.6px;
-    overflow-wrap: anywhere;
-    font-variant-numeric: tabular-nums;
-  }
-
+  .gd-stat-card p { margin: 1px 0 6px; color: var(--gd-muted); font-size: 12px; font-weight: 650; }
+  .gd-stat-card h2 { margin: 0; color: var(--gd-ink); font-size: clamp(22px, 2vw, 30px); font-weight: 800; line-height: 1.25; letter-spacing: -.6px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
   .gd-stat-card h2.gd-money { font-size: clamp(17px, 1.6vw, 23px); }
   .gd-stat-note { display: block; margin-top: 5px; color: #94a3b8; font-size: 11px; }
 
-  .gd-panel {
-    min-width: 0;
-    overflow: hidden;
-    background: white;
-    border: 1px solid var(--gd-line);
-    border-radius: 18px;
-    box-shadow: 0 3px 12px rgba(15,23,42,.035);
-  }
-
-  .gd-panel-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 24px 24px 20px;
-  }
-
-  .gd-panel-heading h2 {
-    margin: 0;
-    color: var(--gd-ink);
-    font-size: 19px;
-    font-weight: 800;
-    letter-spacing: -.35px;
-  }
-
+  .gd-panel { min-width: 0; overflow: hidden; background: white; border: 1px solid var(--gd-line); border-radius: 18px; box-shadow: 0 3px 12px rgba(15,23,42,.035); }
+  .gd-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 24px 20px; }
+  .gd-panel-heading h2 { margin: 0; color: var(--gd-ink); font-size: 19px; font-weight: 800; letter-spacing: -.35px; }
   .gd-panel-heading p { margin: 5px 0 0; color: var(--gd-muted); font-size: 12px; }
 
   .gd-refresh-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    min-height: 37px;
-    padding: 8px 12px;
-    color: #475569;
-    background: white;
-    border: 1px solid var(--gd-line);
-    border-radius: 9px;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    min-height: 37px; padding: 8px 12px; color: #475569; background: white;
+    border: 1px solid var(--gd-line); border-radius: 9px; font: inherit;
+    font-size: 12px; font-weight: 700; cursor: pointer;
   }
 
   .gd-refresh-btn:hover { color: #4338ca; background: #f5f5ff; }
   .gd-refresh-btn:disabled { opacity: .6; cursor: wait; }
 
-  .gd-filters {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding: 0 24px 20px;
+  .gd-date-range {
+    display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
+    padding: 0 24px 16px;
   }
 
-  .gd-search, .gd-date-filter {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    min-height: 42px;
-    padding: 0 12px;
-    color: #94a3b8;
-    background: #f8fafc;
-    border: 1px solid #e6eaf1;
-    border-radius: 10px;
+  .gd-date-field { display: flex; flex-direction: column; gap: 7px; min-width: 180px; }
+  .gd-date-field > span { display: flex; align-items: center; gap: 7px; color: #475569; font-size: 12px; font-weight: 750; }
+  .gd-date-field input { min-height: 42px; padding: 9px 11px; color: #334155; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 9px; font: inherit; }
+  .gd-date-field input:focus { outline: 3px solid rgba(99,102,241,.15); border-color: #818cf8; }
+
+  .gd-range-reset {
+    min-height: 40px; padding: 9px 13px; color: #4338ca; background: #eef2ff;
+    border: 1px solid #e0e7ff; border-radius: 9px; font: inherit; font-size: 12px;
+    font-weight: 750; cursor: pointer;
   }
 
-  .gd-search { flex: 1; min-width: 220px; }
-  .gd-date-filter { min-width: 180px; }
+  .gd-range-reset:hover { background: #e0e7ff; }
+  .gd-range-error { margin: 0 24px 12px; color: #b91c1c; font-size: 12px; }
+  .gd-range-summary { padding: 0 24px 18px; color: #64748b; font-size: 12px; }
+  .gd-range-summary strong { color: #334155; }
 
-  .gd-search input, .gd-date-filter input {
-    width: 100%;
-    min-width: 0;
-    color: var(--gd-text);
-    background: transparent;
-    border: 0;
-    outline: none;
-    font: inherit;
-    font-size: 12px;
-  }
+  .gd-filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 0 24px 20px; }
+  .gd-search { display: flex; align-items: center; gap: 9px; min-height: 42px; padding: 0 12px; color: #94a3b8; background: #f8fafc; border: 1px solid #e6eaf1; border-radius: 10px; flex: 1; min-width: 220px; }
+  .gd-search input { width: 100%; min-width: 0; color: var(--gd-text); background: transparent; border: 0; outline: none; font: inherit; font-size: 12px; }
+  .gd-search:focus-within { border-color: #a5b4fc; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
 
-  .gd-search:focus-within, .gd-date-filter:focus-within {
-    border-color: #a5b4fc;
-    box-shadow: 0 0 0 3px rgba(99,102,241,.1);
-  }
-
-  .gd-clear-btn {
-    padding: 9px 12px;
-    color: #4f46e5;
-    background: #eef2ff;
-    border: 0;
-    border-radius: 9px;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
+  .gd-clear-btn { padding: 9px 12px; color: #4f46e5; background: #eef2ff; border: 0; border-radius: 9px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
   .gd-clear-btn:hover { background: #e0e7ff; }
 
   .gd-table-wrap { width: 100%; overflow-x: auto; }
-
-  .gd-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    text-align: left;
-    font-size: 12px;
-  }
-
-  .gd-table thead th {
-    padding: 14px 16px;
-    color: #64748b;
-    background: #f8fafc;
-    border-top: 1px solid #edf0f5;
-    border-bottom: 1px solid #e9edf4;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: .65px;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .gd-table thead th:first-child,
-  .gd-table tbody td:first-child { padding-left: 24px; }
-
-  .gd-table tbody td {
-    padding: 15px 16px;
-    color: #475569;
-    border-bottom: 1px solid #f0f2f7;
-    vertical-align: middle;
-    white-space: nowrap;
-  }
-
+  .gd-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: auto; text-align: left; font-size: 12px; }
+  .gd-table thead th { padding: 14px 16px; color: #64748b; background: #f8fafc; border-top: 1px solid #edf0f5; border-bottom: 1px solid #e9edf4; font-size: 10px; font-weight: 800; letter-spacing: .65px; text-transform: uppercase; white-space: nowrap; }
+  .gd-table thead th:first-child, .gd-table tbody td:first-child { padding-left: 24px; }
+  .gd-table tbody td { padding: 15px 16px; color: #475569; border-bottom: 1px solid #f0f2f7; vertical-align: middle; }
   .gd-table tbody tr:last-child td { border-bottom: 0; }
-  .gd-table tbody tr:hover td { background: #fafbff; }
 
-  .gd-id {
-    display: inline-flex;
-    align-items: center;
-    padding: 5px 8px;
-    color: #4338ca;
-    background: #eef2ff;
-    border-radius: 7px;
-    font-weight: 800;
-    font-size: 11px;
-  }
+  .gd-delivery-row { cursor: pointer; transition: background .15s ease; }
+  .gd-delivery-row:hover td { background: #f5f6ff; }
+  .gd-delivery-row:focus { outline: 2px solid #818cf8; outline-offset: -2px; }
+  .gd-delivery-row:focus-visible td { background: #eef2ff; }
 
-  .gd-customer { display: flex; align-items: center; gap: 9px; }
-
-  .gd-avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 31px;
-    height: 31px;
-    flex-shrink: 0;
-    color: #4338ca;
-    background: #e0e7ff;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 800;
-  }
-
+  .gd-id { display: inline-flex; align-items: center; padding: 5px 8px; color: #4338ca; background: #eef2ff; border-radius: 7px; font-weight: 800; font-size: 11px; white-space: nowrap; }
+  .gd-customer { display: flex; align-items: center; gap: 9px; min-width: 150px; }
+  .gd-avatar { display: inline-flex; align-items: center; justify-content: center; width: 31px; height: 31px; flex-shrink: 0; color: #4338ca; background: #e0e7ff; border-radius: 10px; font-size: 12px; font-weight: 800; }
   .gd-customer-name { color: #1e293b; font-weight: 750; }
   .gd-cylinder { color: #475569; }
   .gd-quantity { color: #1e293b; font-weight: 800; }
-  .gd-amount { color: #475569; font-variant-numeric: tabular-nums; }
+  .gd-amount { color: #475569; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .gd-total { color: #0f766e; font-weight: 800; }
-  .gd-date { color: #475569; }
-  .gd-note { display: inline-block; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gd-date { color: #475569; white-space: nowrap; }
+  .gd-note { display: block; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  .gd-actions { display: flex; align-items: center; gap: 7px; }
-
-  .gd-icon-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 33px;
-    height: 33px;
-    border: 1px solid transparent;
-    border-radius: 9px;
-    transition: background .15s ease, transform .15s ease;
-  }
-
-  .gd-icon-btn:hover { transform: translateY(-1px); }
-  .gd-icon-btn.view { color: #4338ca; background: #eef2ff; }
-  .gd-icon-btn.view:hover { background: #e0e7ff; }
-  .gd-icon-btn.edit { color: #0f766e; background: #ccfbf1; }
-  .gd-icon-btn.edit:hover { background: #99f6e4; }
-
-  .gd-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    padding: 16px 24px;
-    background: #fafbfe;
-    border-top: 1px solid #edf0f5;
-  }
-
-  .gd-pagination-info {
-    color: #64748b;
-    font-size: 12px;
-  }
-
+  .gd-pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 24px; background: #fafbfe; border-top: 1px solid #edf0f5; }
+  .gd-pagination-info { color: #64748b; font-size: 12px; }
   .gd-pagination-info strong { color: #334155; }
-
-  .gd-page-controls {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .gd-page-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 34px;
-    min-height: 34px;
-    padding: 7px 10px;
-    color: #475569;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background .15s ease, border-color .15s ease;
-  }
-
-  .gd-page-btn:hover:not(:disabled) {
-    color: #4338ca;
-    background: #eef2ff;
-    border-color: #c7d2fe;
-  }
-
-  .gd-page-btn.active {
-    color: white;
-    background: #4f46e5;
-    border-color: #4f46e5;
-  }
-
-  .gd-page-btn:disabled {
-    opacity: .4;
-    cursor: not-allowed;
-  }
-
+  .gd-page-controls { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+  .gd-page-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; min-height: 34px; padding: 7px 10px; color: #475569; background: white; border: 1px solid #e2e8f0; border-radius: 8px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .gd-page-btn:hover:not(:disabled) { color: #4338ca; background: #eef2ff; border-color: #c7d2fe; }
+  .gd-page-btn.active { color: white; background: #4f46e5; border-color: #4f46e5; }
+  .gd-page-btn:disabled { opacity: .4; cursor: not-allowed; }
   .gd-page-prev, .gd-page-next { padding-inline: 12px; }
 
-  .gd-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-height: 240px;
-    padding: 30px 20px;
-    text-align: center;
-  }
-
+  .gd-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 240px; padding: 30px 20px; text-align: center; }
   .gd-empty h3 { margin: 5px 0 0; color: #1e293b; font-size: 16px; font-weight: 800; }
   .gd-empty p { margin: 0 0 8px; color: #64748b; font-size: 12px; }
-
-  .gd-empty-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 55px;
-    height: 55px;
-    margin-bottom: 6px;
-    color: #4f46e5;
-    background: #eef2ff;
-    border-radius: 17px;
-  }
-
-  .gd-empty-symbol {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    color: #b91c1c;
-    background: #fee2e2;
-    border-radius: 50%;
-    font-size: 22px;
-    font-weight: 800;
-  }
-
-  .gd-spinner {
-    width: 28px;
-    height: 28px;
-    border: 3px solid #e0e7ff;
-    border-top-color: #4f46e5;
-    border-radius: 50%;
-    animation: gd-spin .7s linear infinite;
-  }
-
+  .gd-empty-icon { display: flex; align-items: center; justify-content: center; width: 55px; height: 55px; margin-bottom: 6px; color: #4f46e5; background: #eef2ff; border-radius: 17px; }
+  .gd-empty-symbol { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; color: #b91c1c; background: #fee2e2; border-radius: 50%; font-size: 22px; font-weight: 800; }
+  .gd-spinner { width: 28px; height: 28px; border: 3px solid #e0e7ff; border-top-color: #4f46e5; border-radius: 50%; animation: gd-spin .7s linear infinite; }
   @keyframes gd-spin { to { transform: rotate(360deg); } }
 
-  .gd-error {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 22px;
-    padding: 16px 18px;
-    color: #991b1b;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 13px;
-  }
-
+  .gd-error { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 22px; padding: 16px 18px; color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; border-radius: 13px; }
   .gd-error strong { display: block; font-size: 13px; }
   .gd-error p { margin: 4px 0 0; font-size: 12px; }
-
-  .gd-retry-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 12px;
-    color: #991b1b;
-    background: white;
-    border: 1px solid #fecaca;
-    border-radius: 8px;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 750;
-    cursor: pointer;
-  }
-
+  .gd-retry-btn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 12px; color: #991b1b; background: white; border: 1px solid #fecaca; border-radius: 8px; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
   .gd-retry-btn:hover { background: #fff7f7; }
 
   @media (max-width: 1200px) {
@@ -1188,12 +994,13 @@ const styles = `
     .gd-hero { align-items: flex-start; flex-direction: column; padding: 22px; }
     .gd-hero .gd-primary-btn { width: 100%; }
     .gd-panel-heading { padding: 20px 18px; }
-    .gd-filters { padding: 0 18px 18px; }
+    .gd-date-range, .gd-range-summary, .gd-filters { padding-left: 18px; padding-right: 18px; }
+    .gd-date-field { flex: 1; min-width: 140px; }
     .gd-search { min-width: 100%; }
-    .gd-date-filter { flex: 1; }
     .gd-pagination { padding: 15px 18px; }
     .gd-pagination-info { width: 100%; }
     .gd-page-controls { justify-content: flex-start; }
+    .gd-table { min-width: 900px; }
   }
 
   @media (max-width: 480px) {

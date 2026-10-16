@@ -209,8 +209,176 @@ export const getReportPayments = async (
     }));
 };
 
+/* DAILY BUSINESS CLOSING — DATE RANGE */
+export const getDailyBusinessClosing = async (
+  startDate: string,
+  endDate: string
+) => {
+  // Interpret both calendar dates in India Standard Time.
+  const start = new Date(`${startDate}T00:00:00+05:30`);
 
+  // Exclusive end boundary: midnight after the closing date.
+  const end = new Date(
+    new Date(`${endDate}T00:00:00+05:30`).getTime() +
+      24 * 60 * 60 * 1000
+  );
+
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime()) ||
+    start > end
+  ) {
+    throw new Error("INVALID_CLOSING_DATE");
+  }
+
+  const [customers, deliveries, payments, inventory] =
+    await Promise.all([
+      prisma.orm.public.Customers.all(),
+      prisma.orm.public.Deliveries.all(),
+      prisma.orm.public.Payments.all(),
+      prisma.orm.public.Inventory.all(),
+    ]);
+
+  // Include records from the start date through the end date,
+  // using an exclusive upper boundary.
+  const inSelectedRange = (value: string | Date) => {
+    const timestamp = new Date(value).getTime();
+
+    return (
+      timestamp >= start.getTime() &&
+      timestamp < end.getTime()
+    );
+  };
+
+  const dailyDeliveries = deliveries.filter((delivery) =>
+    inSelectedRange(delivery.deliveryDate)
+  );
+
+  const dailyPayments = payments.filter((payment) =>
+    inSelectedRange(payment.paymentDate)
+  );
+
+  const dailyInventory = inventory.filter((movement) =>
+    inSelectedRange(movement.createdAt)
+  );
+
+  const totalSales = dailyDeliveries.reduce(
+    (sum, delivery) => sum + Number(delivery.totalAmount),
+    0
+  );
+
+  const totalCollected = dailyPayments.reduce(
+    (sum, payment) => sum + Number(payment.amount),
+    0
+  );
+
+  const cylindersSold = dailyDeliveries.reduce(
+    (sum, delivery) => sum + Number(delivery.quantity),
+    0
+  );
+
+  const paymentsByMethod: Record<string, number> = {};
+
+  for (const payment of dailyPayments) {
+    const method = payment.paymentMethod;
+    paymentsByMethod[method] =
+      (paymentsByMethod[method] ?? 0) +
+      Number(payment.amount);
+  }
+
+  // Outstanding balance is based on all historical transactions.
+  const totalOutstanding = customers.reduce(
+    (sum, customer) => {
+      const customerDeliveries = deliveries.filter(
+        (delivery) => delivery.customerId === customer.id
+      );
+
+      const customerPayments = payments.filter(
+        (payment) => payment.customerId === customer.id
+      );
+
+      const delivered = customerDeliveries.reduce(
+        (total, delivery) =>
+          total + Number(delivery.totalAmount),
+        0
+      );
+
+      const paid = customerPayments.reduce(
+        (total, payment) =>
+          total + Number(payment.amount),
+        0
+      );
+
+      return (
+        sum +
+        Number(customer.openingBalance) +
+        delivered -
+        paid
+      );
+    },
+    0
+  );
+
+  const inventoryMovements = dailyInventory.reduce(
+    (summary, movement) => {
+      const key = `${movement.type}_${movement.status}`;
+
+      summary[key] =
+        (summary[key] ?? 0) +
+        Number(movement.quantity);
+
+      return summary;
+    },
+    {} as Record<string, number>
+  );
+
+  const money = (value: number) =>
+    Number(value.toFixed(2));
+
+  return {
+    startDate,
+    endDate,
+    timezone: "Asia/Kolkata",
+
+    sales: {
+      totalAmount: money(totalSales),
+      deliveryCount: dailyDeliveries.length,
+      cylindersSold,
+    },
+
+    collections: {
+      totalAmount: money(totalCollected),
+      paymentCount: dailyPayments.length,
+      byMethod: Object.fromEntries(
+        Object.entries(paymentsByMethod).map(
+          ([method, amount]) => [
+            method,
+            money(amount),
+          ]
+        )
+      ),
+    },
+
+    outstanding: {
+      totalAmount: money(totalOutstanding),
+      customerCount: customers.length,
+    },
+
+    inventoryMovements,
+
+    notes: [
+      "Sales, collections, and inventory movements cover the selected date range.",
+      "Outstanding balances reflect all recorded transactions, not only the selected range.",
+      "Inventory movements are activity totals, not a historical closing-stock snapshot.",
+      "Expenses and profit are not included in this version.",
+    ],
+  };
+};
+
+
+/*
 /* DAILY BUSINESS CLOSING */
+/*
 export const getDailyBusinessClosing = async (date: string) => {
   // Interpret the selected calendar date in India Standard Time.
   const start = new Date(`${date}T00:00:00+05:30`);
@@ -352,7 +520,7 @@ export const getDailyBusinessClosing = async (date: string) => {
     ],
   };
 };
-
+*/
 
 /* PROFIT ANALYSIS */
 export const getReportProfit = async (

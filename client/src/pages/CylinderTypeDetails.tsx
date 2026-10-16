@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
@@ -79,7 +78,9 @@ function CylinderTypeDetails() {
 
         setCylinderType(result.data);
       } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") return;
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
 
         setError(
           err instanceof Error
@@ -202,26 +203,27 @@ function CylinderTypeDetails() {
       <div className="gasflow-details-page">
         <style>{styles}</style>
 
-        <header className="topbar">
-          <Link to="/" className="brand">
-            <span className="brand-icon">G</span>
-            GasFlow
-          </Link>
-        </header>
-
         <main className="error-container">
           <div className="error-symbol">!</div>
+
           <h1>Cylinder Type Not Available</h1>
-          <p>{error || "The requested cylinder type could not be found."}</p>
+
+          <p>
+            {error ||
+              "The requested cylinder type could not be found."}
+          </p>
 
           <div className="error-actions">
-            <Link to="/cylinder-types" className="secondary-button">
+            <Link
+              to="/cylinder-types"
+              className="secondary-button"
+            >
               ← Back to Cylinder Types
             </Link>
 
             <button
               type="button"
-              className="primary-button"
+              className="primary-button error-retry-button"
               onClick={() => window.location.reload()}
             >
               Try Again
@@ -238,20 +240,9 @@ function CylinderTypeDetails() {
     <div className="gasflow-details-page">
       <style>{styles}</style>
 
-      <header className="topbar">
-        <Link to="/" className="brand">
-          <span className="brand-icon">G</span>
-          GasFlow
-        </Link>
-
-        <Link to="/cylinder-types" className="dashboard-link">
-          ← Back to Cylinder Types
-        </Link>
-      </header>
-
       <main className="page-container">
         <div className="breadcrumb">
-          <Link to="/">Dashboard</Link>
+          <Link to="/dashboard">Dashboard</Link>
           <span>/</span>
           <Link to="/cylinder-types">Cylinder Types</Link>
           <span>/</span>
@@ -260,11 +251,15 @@ function CylinderTypeDetails() {
 
         <section className="hero">
           <div className="hero-content">
-            <span className="eyebrow">INVENTORY CONFIGURATION</span>
+            <span className="eyebrow">
+              INVENTORY CONFIGURATION
+            </span>
+
             <h1>Cylinder Type Details</h1>
+
             <p>
-              View pricing, capacity, stock alert settings, and status for
-              this cylinder type.
+              View pricing, capacity, stock alert settings, and status
+              for this cylinder type.
             </p>
 
             <div className="hero-actions">
@@ -272,12 +267,15 @@ function CylinderTypeDetails() {
                 to={`/cylinder-types/${cylinderType.id}/edit`}
                 className="primary-button"
               >
-                <span>✎</span> Edit Cylinder Type
+                <span>✎</span>
+                Edit Cylinder Type
               </Link>
 
               <span
                 className={`hero-status ${
-                  cylinderType.isActive ? "hero-active" : "hero-inactive"
+                  cylinderType.isActive
+                    ? "hero-active"
+                    : "hero-inactive"
                 }`}
               >
                 <span className="status-dot" />
@@ -286,14 +284,19 @@ function CylinderTypeDetails() {
             </div>
           </div>
 
-          <div className="hero-decoration" aria-hidden="true">
-            <div className="cylinder-illustration">
+          <div className="hero-decoration">
+            <div
+              className="cylinder-illustration"
+              aria-hidden="true"
+            >
               <div className="cylinder-neck" />
+
               <div className="cylinder-body">
                 <div className="cylinder-label">GAS</div>
                 <div className="cylinder-line" />
                 <div className="cylinder-line short" />
               </div>
+
               <div className="cylinder-base" />
             </div>
 
@@ -307,8 +310,11 @@ function CylinderTypeDetails() {
         {deleteError && (
           <div className="alert-error" role="alert">
             <span className="alert-icon">!</span>
+
             <div>
-              <strong>Unable to delete cylinder type</strong>
+              <strong>
+                Unable to delete cylinder type
+              </strong>
               <p>{deleteError}</p>
             </div>
           </div>
@@ -317,6 +323,7 @@ function CylinderTypeDetails() {
         <section className="summary-grid">
           <article className="summary-card">
             <div className="summary-icon purple-icon">▤</div>
+
             <div>
               <p>Capacity</p>
               <h2>{cylinderType.capacityKg} kg</h2>
@@ -326,6 +333,7 @@ function CylinderTypeDetails() {
 
           <article className="summary-card">
             <div className="summary-icon green-icon">₹</div>
+
             <div>
               <p>Selling Price</p>
               <h2>{formatPrice(cylinderType.sellingPrice)}</h2>
@@ -333,14 +341,20 @@ function CylinderTypeDetails() {
             </div>
           </article>
 
-          <article className="summary-card">
+          <button
+            type="button"
+            className="summary-card summary-card-clickable"
+            onClick={() => navigate("/inventory")}
+            aria-label="Open inventory from low-stock threshold"
+          >
             <div className="summary-icon orange-icon">!</div>
+
             <div>
               <p>Low-Stock Threshold</p>
               <h2>{threshold}</h2>
-              <span>Cylinders or fewer</span>
+              <span>Cylinders or fewer · View inventory →</span>
             </div>
-          </article>
+          </button>
         </section>
 
         <div className="details-layout">
@@ -348,15 +362,20 @@ function CylinderTypeDetails() {
             <div className="section-heading">
               <div>
                 <h2>General Information</h2>
-                <p>Core information about this cylinder type.</p>
+                <p>
+                  Core information about this cylinder type.
+                </p>
               </div>
 
-              <span className="id-badge">ID #{cylinderType.id}</span>
+              <span className="id-badge">
+                ID #{cylinderType.id}
+              </span>
             </div>
 
             <div className="details-list">
               <div className="detail-row">
                 <span className="detail-icon">▤</span>
+
                 <div className="detail-copy">
                   <span>Cylinder Name</span>
                   <strong>{cylinderType.name}</strong>
@@ -365,6 +384,7 @@ function CylinderTypeDetails() {
 
               <div className="detail-row">
                 <span className="detail-icon">⚖</span>
+
                 <div className="detail-copy">
                   <span>Capacity</span>
                   <strong>{cylinderType.capacityKg} kg</strong>
@@ -373,80 +393,112 @@ function CylinderTypeDetails() {
 
               <div className="detail-row">
                 <span className="detail-icon">₹</span>
+
                 <div className="detail-copy">
                   <span>Selling Price</span>
-                  <strong>{formatPrice(cylinderType.sellingPrice)}</strong>
+                  <strong>
+                    {formatPrice(cylinderType.sellingPrice)}
+                  </strong>
                 </div>
               </div>
 
               <div className="detail-row">
                 <span className="detail-icon">◉</span>
+
                 <div className="detail-copy">
                   <span>Current Status</span>
+
                   <strong
                     className={
-                      cylinderType.isActive ? "text-active" : "text-inactive"
+                      cylinderType.isActive
+                        ? "text-active"
+                        : "text-inactive"
                     }
                   >
-                    {cylinderType.isActive ? "Active" : "Inactive"}
+                    {cylinderType.isActive
+                      ? "Active"
+                      : "Inactive"}
                   </strong>
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="content-card">
+          <button
+            type="button"
+            className="content-card stock-settings-card"
+            onClick={() => navigate("/inventory")}
+            aria-label="Open inventory from Stock Alert Settings"
+          >
             <div className="section-heading">
               <div>
                 <h2>Stock Alert Settings</h2>
-                <p>Configured threshold for low-stock notifications.</p>
+                <p>
+                  Configured threshold for low-stock notifications.
+                </p>
               </div>
             </div>
 
             <div className="threshold-panel">
               <div className="threshold-icon">!</div>
+
               <div>
-                <p className="threshold-label">Low-Stock Threshold</p>
+                <p className="threshold-label">
+                  Low-Stock Threshold
+                </p>
+
                 <h3>{threshold} cylinders</h3>
+
                 <p className="threshold-description">
-                  Show a low-stock alert when the filled stock for this
-                  cylinder type reaches {threshold} cylinders or fewer.
+                  Show a low-stock alert when the filled stock for
+                  this cylinder type reaches {threshold} cylinders
+                  or fewer.
                 </p>
               </div>
             </div>
 
             <div className="info-note">
               <span>ⓘ</span>
+
               <p>
-                The alert depends on your inventory's filled-stock quantity
-                and the low-stock rule implemented by your backend.
+                The alert depends on your inventory's filled-stock
+                quantity and the low-stock rule implemented by your
+                backend. Click to view inventory.
               </p>
             </div>
-          </section>
+          </button>
         </div>
 
         <section className="content-card timestamps-card">
           <div className="section-heading">
             <div>
               <h2>Record Information</h2>
-              <p>Creation and last update timestamps.</p>
+              <p>
+                Creation and last update timestamps.
+              </p>
             </div>
           </div>
 
           <div className="timestamp-grid">
             <div className="timestamp-item">
               <span className="timestamp-icon">＋</span>
+
               <div>
                 <span>Created At</span>
-                <strong>{formatDate(cylinderType.createdAt)}</strong>
+                <strong>
+                  {formatDate(cylinderType.createdAt)}
+                </strong>
               </div>
             </div>
 
             <div className="timestamp-item">
               <span className="timestamp-icon">↻</span>
+
               <div>
                 <span>Last Updated</span>
-                <strong>{formatDate(cylinderType.updatedAt)}</strong>
+                <strong>
+                  {formatDate(cylinderType.updatedAt)}
+                </strong>
               </div>
             </div>
           </div>
@@ -455,9 +507,11 @@ function CylinderTypeDetails() {
         <section className="danger-zone">
           <div>
             <h3>Delete Cylinder Type</h3>
+
             <p>
-              Remove this cylinder type if it is no longer required. Your
-              backend may prevent deletion when related records exist.
+              Remove this cylinder type if it is no longer required.
+              Your backend may prevent deletion when related records
+              exist.
             </p>
           </div>
 
@@ -480,7 +534,6 @@ function CylinderTypeDetails() {
 
         <footer className="page-footer">
           <span>GasFlow Inventory Management</span>
-          <Link to="/cylinder-types">Return to Cylinder Types →</Link>
         </footer>
       </main>
     </div>
@@ -498,50 +551,6 @@ const styles = `
     background: #f5f6fb;
     color: #25233f;
     font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  }
-
-  .topbar {
-    min-height: 72px;
-    padding: 0 6%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    background: #fff;
-    border-bottom: 1px solid #ececf4;
-  }
-
-  .brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    color: #24213f;
-    font-size: 21px;
-    font-weight: 800;
-    text-decoration: none;
-  }
-
-  .brand-icon {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    color: #fff;
-    background: linear-gradient(135deg, #6157d9, #8b5cf6);
-    box-shadow: 0 5px 12px #7662dc40;
-  }
-
-  .dashboard-link {
-    color: #65647b;
-    font-size: 13px;
-    font-weight: 650;
-    text-decoration: none;
-  }
-
-  .dashboard-link:hover,
-  .breadcrumb a:hover {
-    color: #6556d9;
   }
 
   .page-container {
@@ -563,6 +572,10 @@ const styles = `
   .breadcrumb a {
     color: #77748e;
     text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    color: #6556d9;
   }
 
   .breadcrumb-current {
@@ -706,6 +719,7 @@ const styles = `
     background: #ffbe73;
   }
 
+  /* Illustration and Type badge stay aligned in the same hero area. */
   .hero-decoration {
     width: 215px;
     min-width: 175px;
@@ -714,6 +728,7 @@ const styles = `
     z-index: 1;
     display: grid;
     place-items: center;
+    flex-shrink: 0;
   }
 
   .cylinder-illustration {
@@ -851,6 +866,26 @@ const styles = `
   .summary-card span {
     color: #a09db0;
     font-size: 10px;
+  }
+
+  .summary-card-clickable {
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .summary-card-clickable:hover {
+    transform: translateY(-2px);
+    border-color: #d3cafa;
+    box-shadow: 0 8px 22px #392c7910;
+  }
+
+  .summary-card-clickable:focus-visible,
+  .stock-settings-card:focus-visible {
+    outline: 3px solid #a99af9;
+    outline-offset: 3px;
   }
 
   .details-layout {
@@ -1003,6 +1038,21 @@ const styles = `
     color: #77728f;
     font-size: 12px;
     line-height: 1.8;
+  }
+
+  .stock-settings-card {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .stock-settings-card:hover {
+    transform: translateY(-2px);
+    border-color: #d3cafa;
+    box-shadow: 0 8px 22px #392c7910;
   }
 
   .info-note {
@@ -1177,17 +1227,11 @@ const styles = `
   .page-footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 12px;
     padding: 22px 3px 0;
     color: #9a97aa;
     font-size: 11px;
-  }
-
-  .page-footer a {
-    color: #6a58d4;
-    text-decoration: none;
-    font-weight: 650;
   }
 
   .loading-container {
@@ -1223,7 +1267,7 @@ const styles = `
   .error-container {
     width: 90%;
     max-width: 600px;
-    min-height: 65vh;
+    min-height: 75vh;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -1280,7 +1324,7 @@ const styles = `
     text-decoration: none;
   }
 
-  .error-actions .primary-button {
+  .error-retry-button {
     color: #fff;
     background: linear-gradient(120deg, #5141a0, #8068e8);
   }
@@ -1295,23 +1339,9 @@ const styles = `
     .details-layout {
       grid-template-columns: 1fr;
     }
-
-    .hero-decoration {
-      transform: scale(0.88);
-      transform-origin: center right;
-    }
   }
 
   @media (max-width: 700px) {
-    .topbar {
-      min-height: 64px;
-      padding: 0 5%;
-    }
-
-    .brand {
-      font-size: 18px;
-    }
-
     .page-container {
       width: 92%;
       margin-top: 18px;

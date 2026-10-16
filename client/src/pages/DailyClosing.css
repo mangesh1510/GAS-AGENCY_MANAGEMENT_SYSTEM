@@ -468,3 +468,92 @@
     color: #111827 !important;
   }
 }
+
+/* Clickable report cards */
+.gf-closing-clickable {
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.gf-closing-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgb(23 43 77 / 9%);
+}
+
+.gf-closing-clickable:focus-visible,
+.gf-closing-metric-link:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
+.gf-closing-metric-link {
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.gf-closing-metric-link:hover {
+  background: #f0f5ff;
+}
+
+/* Back navigation */
+.gf-closing-bottom-nav {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 28px;
+  padding: 16px 0;
+}
+
+.gf-closing-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Keep report content within the screen */
+.gf-closing-page,
+.gf-closing-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.gf-closing-summary-grid,
+.gf-closing-detail-grid {
+  min-width: 0;
+}
+
+.gf-closing-card {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .gf-closing-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .gf-closing-filter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gf-closing-date-field,
+  .gf-closing-date-field input {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .gf-closing-summary-grid,
+  .gf-closing-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gf-closing-bottom-nav {
+    padding-bottom: 24px;
+  }
+}
